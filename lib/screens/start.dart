@@ -19,17 +19,21 @@ class _bottommenu extends State<StartScreen>{
     return MaterialApp(
         title: 'Rose',
         debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          appBar: AppBar(title: const Text("CIE")),
-          body: _pages[_pageindex],
-          bottomNavigationBar: BottomNavigationBar(
-            items: const [BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),BottomNavigationBarItem(icon: Icon(Icons.settings), label: "settings")],
-            currentIndex: _pageindex,
-            onTap: (setValue){
-              setState(() {
-                _pageindex=setValue;
-              });
-            },
+        home: Container(
+          child: Scaffold(
+            // appBar: AppBar(
+            //   elevation: 0,
+            // backgroundColor: Colors.transparent),
+            body: _pages[_pageindex],
+            bottomNavigationBar: BottomNavigationBar(
+              items: const [BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),BottomNavigationBarItem(icon: Icon(Icons.settings), label: "settings")],
+              currentIndex: _pageindex,
+              onTap: (setValue){
+                setState(() {
+                  _pageindex=setValue;
+                });
+              },
+            ),
           ),
         )
     );
