@@ -1,4 +1,4 @@
-package com.example.pranayfunds
+package org.cottonseeds.funds
 
 import io.flutter.embedding.android.FlutterActivity
 

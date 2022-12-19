@@ -13,7 +13,7 @@ class _SplashState extends State<Splash> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(seconds: 3), () {
       // 5s over, navigate to a new page
       Navigator.popAndPushNamed(context, '/home');
     });
@@ -32,10 +32,9 @@ class _SplashState extends State<Splash> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
-                  height: 100,
-                  width: 100,
-                  child: SvgPicture.asset(
-                      "lib/images/cs-dark.svg", //asset location
+                  child: SvgPicture.asset("lib/images/logo.svg",
+                      height: 150,
+                      width: 180,
                       semanticsLabel: 'SVG From asset folder.'),
                 )
               ],
