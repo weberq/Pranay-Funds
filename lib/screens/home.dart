@@ -167,8 +167,7 @@ class Home extends StatelessWidget {
                   padding: const EdgeInsets.all(25.0),
                   child: SizedBox(
                     height: 138,
-                    child: Expanded(
-                        child: Container(
+                    child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
                         color: const Color(0xffffffff),
@@ -341,7 +340,7 @@ class Home extends StatelessWidget {
                           ],
                         )
                       ]),
-                    )),
+                    ),
                   ),
                 ),
 
@@ -366,8 +365,7 @@ class Home extends StatelessWidget {
                   padding: const EdgeInsets.all(25.0),
                   child: SizedBox(
                     height: 250,
-                    child: Expanded(
-                        child: Container(
+                    child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
                         color: const Color(0xffffffff),
@@ -529,7 +527,7 @@ class Home extends StatelessWidget {
                               ],
                             )
                           ]),
-                    )),
+                    ),
                   ),
                 )
               ],
