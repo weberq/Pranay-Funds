@@ -32,9 +32,7 @@ class _SplashState extends State<Splash> {
               children: [
                 SizedBox(
                   child: SvgPicture.asset("lib/images/logo.svg",
-                      height: 150,
-                      width: 100,
-                      semanticsLabel: 'SVG From asset folder.'),
+                      height: 180, semanticsLabel: 'SVG From asset folder.'),
                 )
               ],
             ),

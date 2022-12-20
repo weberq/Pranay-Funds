@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
-class Chits extends StatefulWidget {
-  const Chits({super.key});
+class Investments extends StatefulWidget {
+  const Investments({super.key});
 
   @override
   State<StatefulWidget> createState() {
-    return _Chits();
+    return _Investments();
   }
 }
 
-class _Chits extends State<Chits> {
+class _Investments extends State<Investments> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'ChitFunds',
+        title: 'Rose',
         debugShowCheckedModeBanner: false,
         home: Scaffold(
             body: SafeArea(
@@ -46,7 +46,7 @@ class _Chits extends State<Chits> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: const [
                       Text(
-                        "Chit Funds",
+                        "Investments",
                         style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.bold,
@@ -136,7 +136,7 @@ class _Chits extends State<Chits> {
                   lineWidth: 30.0,
                   percent: 0.7,
                   center: const Text(
-                    "Rs.5,000",
+                    "Rs.15,000",
                     style: TextStyle(
                         fontSize: 25.0,
                         fontWeight: FontWeight.bold,

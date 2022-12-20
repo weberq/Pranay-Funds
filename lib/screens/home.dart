@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pranayfunds/screens/chit.dart';
+import 'package:pranayfunds/screens/investments.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -166,40 +168,82 @@ class Home extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(25.0),
                   child: SizedBox(
-                    height: 138,
+                    height: 170,
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
                         color: const Color(0xffffffff),
                       ),
                       child: Column(children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 20.0, top: 20.0),
-                              child: Row(children: [
-                                SizedBox(
-                                  height: 37,
-                                  width: 37,
-                                  // png picture
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(50),
-                                      child: Image.asset(
-                                        "lib/images/investment.png",
-                                        fit: BoxFit.cover,
+                        TextButton(
+                          onPressed: (() => {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const Investments()))
+                              }),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 20.0, top: 20.0),
+                                child: Row(children: [
+                                  SizedBox(
+                                    height: 37,
+                                    width: 37,
+                                    // png picture
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 10),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(50),
+                                        child: Image.asset(
+                                          "lib/images/investment.png",
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: const [
+                                      Text(
+                                        'Investments',
+                                        textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                            color: Color(0xff171930),
+                                            fontFamily: 'Inter',
+                                            fontSize: 17,
+                                            letterSpacing: 0,
+                                            fontWeight: FontWeight.normal,
+                                            height: 1),
+                                      ),
+                                      // sub text
+                                      Text(
+                                        'Gross Value',
+                                        textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                            color: Color(0xff171930),
+                                            fontFamily: 'Inter',
+                                            fontSize: 12,
+                                            letterSpacing: 0,
+                                            fontWeight: FontWeight.normal,
+                                            height: 1.2941176470588236),
+                                      ),
+                                    ],
+                                  )
+                                ]),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 20.0, top: 20.0),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 11),
+                                  child: Row(children: const [
                                     Text(
-                                      'Investments',
+                                      'Rs. 12,00,000',
                                       textAlign: TextAlign.left,
                                       style: TextStyle(
                                           color: Color(0xff171930),
@@ -209,81 +253,90 @@ class Home extends StatelessWidget {
                                           fontWeight: FontWeight.normal,
                                           height: 1),
                                     ),
-                                    // sub text
-                                    Text(
-                                      'Gross Value',
-                                      textAlign: TextAlign.left,
-                                      style: TextStyle(
-                                          color: Color(0xff171930),
-                                          fontFamily: 'Inter',
-                                          fontSize: 12,
-                                          letterSpacing: 0,
-                                          fontWeight: FontWeight.normal,
-                                          height: 1.2941176470588236),
+                                    SizedBox(
+                                      width: 6,
                                     ),
-                                  ],
-                                )
-                              ]),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 20.0, top: 20.0),
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 11),
-                                child: Row(children: const [
-                                  Text(
-                                    'Rs. 12,00,000',
-                                    textAlign: TextAlign.left,
-                                    style: TextStyle(
-                                        color: Color(0xff171930),
-                                        fontFamily: 'Inter',
-                                        fontSize: 17,
-                                        letterSpacing: 0,
-                                        fontWeight: FontWeight.normal,
-                                        height: 1),
-                                  ),
-                                  SizedBox(
-                                    width: 6,
-                                  ),
-                                  Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: Color(0xff171930),
-                                    size: 15,
-                                  )
-                                ]),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      color: Color(0xff171930),
+                                      size: 15,
+                                    )
+                                  ]),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
 
                         // 2nd row
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 20.0, top: 20.0),
-                              child: Row(children: [
-                                SizedBox(
-                                  height: 37,
-                                  width: 37,
-                                  // png picture
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 10),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(50),
-                                      child: Image.asset(
-                                        "lib/images/bag.png",
-                                        fit: BoxFit.cover,
+                        TextButton(
+                          onPressed: (() => {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => const Chits()))
+                              }),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 20.0, top: 20.0),
+                                child: Row(children: [
+                                  SizedBox(
+                                    height: 37,
+                                    width: 37,
+                                    // png picture
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 10),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(50),
+                                        child: Image.asset(
+                                          "lib/images/bag.png",
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: const [
+                                      Text(
+                                        'Chit Funds',
+                                        textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                            color: Color(0xff171930),
+                                            fontFamily: 'Inter',
+                                            fontSize: 17,
+                                            letterSpacing: 0,
+                                            fontWeight: FontWeight.normal,
+                                            height: 1),
+                                      ),
+                                      // sub text
+                                      Text(
+                                        'Gross Value',
+                                        textAlign: TextAlign.left,
+                                        style: TextStyle(
+                                            color: Color(0xff171930),
+                                            fontFamily: 'Inter',
+                                            fontSize: 12,
+                                            letterSpacing: 0,
+                                            fontWeight: FontWeight.normal,
+                                            height: 1.2941176470588236),
+                                      ),
+                                    ],
+                                  )
+                                ]),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 20.0, top: 20.0),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 11),
+                                  child: Row(children: const [
                                     Text(
-                                      'Chit Funds',
+                                      'Rs. 70,000',
                                       textAlign: TextAlign.left,
                                       style: TextStyle(
                                           color: Color(0xff171930),
@@ -293,51 +346,19 @@ class Home extends StatelessWidget {
                                           fontWeight: FontWeight.normal,
                                           height: 1),
                                     ),
-                                    // sub text
-                                    Text(
-                                      'Gross Value',
-                                      textAlign: TextAlign.left,
-                                      style: TextStyle(
-                                          color: Color(0xff171930),
-                                          fontFamily: 'Inter',
-                                          fontSize: 12,
-                                          letterSpacing: 0,
-                                          fontWeight: FontWeight.normal,
-                                          height: 1.2941176470588236),
+                                    SizedBox(
+                                      width: 6,
                                     ),
-                                  ],
-                                )
-                              ]),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 20.0, top: 20.0),
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 11),
-                                child: Row(children: const [
-                                  Text(
-                                    'Rs. 70,000',
-                                    textAlign: TextAlign.left,
-                                    style: TextStyle(
-                                        color: Color(0xff171930),
-                                        fontFamily: 'Inter',
-                                        fontSize: 17,
-                                        letterSpacing: 0,
-                                        fontWeight: FontWeight.normal,
-                                        height: 1),
-                                  ),
-                                  SizedBox(
-                                    width: 6,
-                                  ),
-                                  Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: Color(0xff171930),
-                                    size: 15,
-                                  )
-                                ]),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      color: Color(0xff171930),
+                                      size: 15,
+                                    )
+                                  ]),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         )
                       ]),
                     ),
