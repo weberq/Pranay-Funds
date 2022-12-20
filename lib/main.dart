@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pranayfunds/screens/home.dart';
+import 'package:pranayfunds/screens/settings.dart';
 import 'package:pranayfunds/screens/splash.dart';
 import 'package:pranayfunds/screens/start.dart';
 
@@ -21,7 +23,9 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const Splash(),
-        '/home': (context) => StartScreen(),
+        '/home': (context) => const StartScreen(),
+        '/settings': (context) => const Settings(),
+        '/main': (context) => const Home(),
       },
     );
   }

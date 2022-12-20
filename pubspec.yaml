@@ -67,6 +67,9 @@ flutter:
     - lib/images/bag.png
     - lib/images/investment.png
     - lib/images/avatar.png
+    - lib/images/settings.svg
+    - lib/images/flash.svg
+    - lib/images/badge.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
