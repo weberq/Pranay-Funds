@@ -88,10 +88,10 @@ class Home extends StatelessWidget {
                                           ),
 
                                           // Heading
-                                          Column(
+                                          const Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
-                                            children: const [
+                                            children: [
                                               Text(
                                                 'Pranay Kiran',
                                                 textAlign: TextAlign.left,
@@ -205,10 +205,10 @@ class Home extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  Column(
+                                  const Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
                                         'Investments',
                                         textAlign: TextAlign.left,
@@ -236,12 +236,12 @@ class Home extends StatelessWidget {
                                   )
                                 ]),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(
+                              const Padding(
+                                padding: EdgeInsets.only(
                                     left: 20.0, top: 20.0),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(right: 11),
-                                  child: Row(children: const [
+                                  padding: EdgeInsets.only(right: 11),
+                                  child: Row(children: [
                                     Text(
                                       'Rs. 12,00,000',
                                       textAlign: TextAlign.left,
@@ -298,10 +298,10 @@ class Home extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  Column(
+                                  const Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
                                         'Chit Funds',
                                         textAlign: TextAlign.left,
@@ -329,12 +329,12 @@ class Home extends StatelessWidget {
                                   )
                                 ]),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(
+                              const Padding(
+                                padding: EdgeInsets.only(
                                     left: 20.0, top: 20.0),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(right: 11),
-                                  child: Row(children: const [
+                                  padding: EdgeInsets.only(right: 11),
+                                  child: Row(children: [
                                     Text(
                                       'Rs. 70,000',
                                       textAlign: TextAlign.left,
@@ -391,10 +391,10 @@ class Home extends StatelessWidget {
                         borderRadius: BorderRadius.circular(18),
                         color: const Color(0xffffffff),
                       ),
-                      child: Column(
+                      child: const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(top: 20.0, left: 20.0),
                               child: Text(
                                 'BANK TRANSFER',
@@ -412,12 +412,12 @@ class Home extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20.0, top: 20.0),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
                                         'Account No.',
                                         textAlign: TextAlign.left,
@@ -445,14 +445,14 @@ class Home extends StatelessWidget {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20.0, top: 20.0),
                                   child: Padding(
-                                    padding: const EdgeInsets.only(right: 15),
+                                    padding: EdgeInsets.only(right: 15),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.end,
-                                      children: const [
+                                      children: [
                                         Text(
                                           '7613049198',
                                           textAlign: TextAlign.right,
@@ -483,7 +483,7 @@ class Home extends StatelessWidget {
                               ],
                             ),
                             // 2nd row
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(top: 40.0, left: 20.0),
                               child: Text(
                                 'UPI TRANSFER',
@@ -501,12 +501,12 @@ class Home extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20.0, top: 20.0),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
                                         'UPI Id.',
                                         textAlign: TextAlign.left,
@@ -522,14 +522,14 @@ class Home extends StatelessWidget {
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20.0, top: 20.0),
                                   child: Padding(
-                                    padding: const EdgeInsets.only(right: 15),
+                                    padding: EdgeInsets.only(right: 15),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.end,
-                                      children: const [
+                                      children: [
                                         Text(
                                           'kiranpranay12@okicici',
                                           textAlign: TextAlign.right,

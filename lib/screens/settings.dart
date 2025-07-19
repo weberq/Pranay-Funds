@@ -65,11 +65,11 @@ class Settings extends StatelessWidget {
                     height: 10,
                   ),
                   // menu row
-                  Padding(
-                    padding: const EdgeInsets.all(20),
+                  const Padding(
+                    padding: EdgeInsets.all(20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
+                      children: [
                         Text(
                           "STATS",
                           style: TextStyle(
@@ -122,10 +122,10 @@ class Settings extends StatelessWidget {
                                         semanticsLabel:
                                             'SVG From asset folder.'),
                                   ),
-                                  Column(
+                                  const Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
                                         "55",
                                         style: TextStyle(
@@ -172,10 +172,10 @@ class Settings extends StatelessWidget {
                                         semanticsLabel:
                                             'SVG From asset folder.'),
                                   ),
-                                  Column(
+                                  const Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
                                         "105",
                                         style: TextStyle(
@@ -207,10 +207,10 @@ class Settings extends StatelessWidget {
                     height: 10,
                   ),
                   // small heading
-                  Column(
+                  const Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         "ACHIEVEMENTS",
                         textAlign: TextAlign.left,

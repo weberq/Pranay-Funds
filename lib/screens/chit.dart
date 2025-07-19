@@ -40,11 +40,11 @@ class _Chits extends State<Chits> {
                     // )
                   ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Text(
                         "Chit Funds",
                         style: TextStyle(
@@ -199,11 +199,11 @@ class _Chits extends State<Chits> {
                   height: 10,
                 ),
                 // small heading 'history'
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
+                const Padding(
+                  padding: EdgeInsets.all(20.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Text(
                         "History",
                         style: TextStyle(

@@ -40,11 +40,11 @@ class _Investments extends State<Investments> {
                     // )
                   ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Text(
                         "Investments",
                         style: TextStyle(
@@ -199,11 +199,11 @@ class _Investments extends State<Investments> {
                   height: 10,
                 ),
                 // small heading 'history'
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
+                const Padding(
+                  padding: EdgeInsets.all(20.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Text(
                         "History",
                         style: TextStyle(
