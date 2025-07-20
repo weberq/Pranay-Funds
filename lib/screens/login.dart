@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:pranayfunds/configs/app_config.dart';
+import 'package:pranayfunds/models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,9 +29,15 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Handles the full user login flow.
+  /// Handles the full user login flow:
+  /// 1. Finds the user by username to get their user_id.
+  /// 2. Creates a new session to authenticate the user.
+  /// 3. Logs the successful authentication event.
   Future<void> _login() async {
+    // Prevent multiple submissions while a request is in progress
     if (_isLoading) return;
+
+    // Validate the form fields
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -40,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // Step 1: Find the user by username
+      // Step 1: Find the user by username to get their user_id
       final String username = _usernameController.text;
       final findUserUrl =
           Uri.parse('${AppConfig.baseUrl}/user_accounts/list?query=$username');
@@ -50,7 +57,16 @@ class _LoginScreenState extends State<LoginScreen> {
           await http.get(findUserUrl, headers: {'X-API-KEY': AppConfig.apiKey});
       _logResponse('Finding User', findUserResponse);
 
+      // Check for a valid JSON response before decoding
+      if (!findUserResponse.body.trim().startsWith('{')) {
+        _showError(
+            'Server returned an invalid response. Please contact support.');
+        return;
+      }
+
       final findUserBody = jsonDecode(findUserResponse.body);
+
+      // Check for a successful response and if user data exists
       if (findUserResponse.statusCode != 200 ||
           findUserBody['status'] != 'success' ||
           (findUserBody['data'] as List).isEmpty) {
@@ -59,12 +75,13 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       final userData = findUserBody['data'][0];
-      final int userId = userData['user_id'];
 
       // Step 2: Create a session to log the user in
       final sessionUrl = Uri.parse('${AppConfig.baseUrl}/user_sessions/update');
       final sessionRequestBody = {
-        "user_id": userId,
+        "user_id": userData['user_id'],
+        // NOTE: These are placeholder values. You will need to implement logic
+        // to get the real device fingerprint and tokens.
         "device_id": 42,
         "access_token": "jwt_access_placeholder",
         "refresh_token": "jwt_refresh_placeholder",
@@ -84,32 +101,43 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       _logResponse('Creating Session', sessionResponse);
 
-      // --- 👇 ROBUST ERROR HANDLING IS HERE ---
-      // Check if the response body is a valid JSON before decoding
-      if (sessionResponse.body.trim().startsWith('{')) {
-        final sessionResponseBody = jsonDecode(sessionResponse.body);
-        if (sessionResponse.statusCode == 200 &&
-            sessionResponseBody['status'] == 'success') {
-          await _logAuthEvent(userId, 42);
-          if (mounted) Navigator.popAndPushNamed(context, '/home');
-        } else {
-          final message = sessionResponseBody['message'] ??
-              'Login failed due to an unknown API error.';
-          _showError(message);
+      // Check for a valid JSON response before decoding
+      if (!sessionResponse.body.trim().startsWith('{')) {
+        _showError(
+            'Authentication failed. The server returned an invalid response.');
+        return;
+      }
+
+      final sessionResponseBody = jsonDecode(sessionResponse.body);
+
+      if (sessionResponse.statusCode == 200 &&
+          sessionResponseBody['status'] == 'success') {
+        // Step 3 (Recommended): Log the successful authentication event for security auditing
+        await _logAuthEvent(
+            userData['user_id'], 42); // Using placeholder device_id
+
+        // Create a UserModel from the user data
+        final user = UserModel.fromJson(userData);
+
+        // Navigate to home and pass the user object as an argument
+        if (mounted) {
+          Navigator.pushReplacementNamed(
+            context,
+            '/home',
+            arguments: user,
+          );
         }
       } else {
-        // This block will now execute because of the server bug
-        _showError(
-            'The server returned an invalid response. Please contact support.');
-        if (kDebugMode) {
-          print(
-              "Server response is not a valid JSON. It's likely a server-side crash.");
-        }
+        // Show an error message from the API response
+        final message = sessionResponseBody['message'] ??
+            'Login failed. Please check your MPIN.';
+        _showError(message);
       }
     } catch (e) {
       _logException(e);
       _showError('An unexpected error occurred. Please try again later.');
     } finally {
+      // Ensure the loading indicator is turned off, even if an error occurs
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -124,13 +152,13 @@ class _LoginScreenState extends State<LoginScreen> {
       final eventUrl = Uri.parse('${AppConfig.baseUrl}/auth_events/update');
       final eventBody = {
         "user_id": userId,
-        "device_id": deviceId,
+        "device_id": deviceId, // This should be a real device ID from your app
         "event_type": "login_success",
-        "ip_address": "0.0.0.0",
-        "user_agent": "FlutterApp/1.0",
+        "ip_address": "0.0.0.0", // Server should ideally capture the real IP
+        "user_agent": "FlutterApp/1.0", // Example user agent
       };
       _logRequest('Logging Auth Event', 'POST', eventUrl, body: eventBody);
-      await http.post(
+      final response = await http.post(
         eventUrl,
         headers: {
           'Content-Type': 'application/json',
@@ -138,6 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
         },
         body: jsonEncode(eventBody),
       );
+      _logResponse('Logging Auth Event', response);
     } catch (e) {
       _logException(e, stage: 'Failed to log auth event');
     }

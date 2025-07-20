@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pranayfunds/screens/home.dart';
-import 'package:pranayfunds/screens/login.dart'; // <-- Import the new screen
-import 'package:pranayfunds/screens/settings.dart';
+import 'package:pranayfunds/models/user_model.dart';
+import 'package:pranayfunds/screens/login.dart';
 import 'package:pranayfunds/screens/splash.dart';
 import 'package:pranayfunds/screens/start.dart';
 
@@ -15,25 +14,35 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Pranay funds',
+      title: 'Pranay Funds',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.orange, // Use a color that matches your brand
-        // Define a color scheme based on your logo for M3
+        // Use a color that matches your brand
+        primarySwatch: Colors.orange,
+        // Define a color scheme based on your logo for Material 3
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFF39C12),
           brightness: Brightness.light,
         ),
         useMaterial3: true,
       ),
-      // Update the initial route to go to splash, which will then go to login
+      // The initial route is the splash screen
       initialRoute: '/',
+      // Define all the navigation routes for your app
       routes: {
         '/': (context) => const Splash(),
-        '/login': (context) => const LoginScreen(), // <-- Add login route
-        '/home': (context) => const StartScreen(),
-        '/settings': (context) => const Settings(),
-        '/main': (context) => const Home(),
+        '/login': (context) => const LoginScreen(),
+
+        // The '/settings' route is removed from here because it's now handled
+        // by the BottomNavigationBar inside StartScreen, which has the user data.
+
+        // This is the corrected route for '/home'.
+        // It extracts the UserModel passed from the login screen
+        // and provides it to the StartScreen.
+        '/home': (context) {
+          final user = ModalRoute.of(context)!.settings.arguments as UserModel;
+          return StartScreen(user: user);
+        },
       },
     );
   }

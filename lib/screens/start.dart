@@ -1,43 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:pranayfunds/models/user_model.dart';
+import 'package:pranayfunds/screens/home.dart';
 import 'package:pranayfunds/screens/settings.dart';
 
-import 'home.dart';
-
 class StartScreen extends StatefulWidget {
-  const StartScreen({super.key});
+  final UserModel user;
+  const StartScreen({super.key, required this.user});
 
   @override
-  State<StatefulWidget> createState() {
-    return _Bottommenu();
-  }
+  State<StartScreen> createState() => _StartScreenState();
 }
 
-class _Bottommenu extends State<StartScreen> {
-  final _pages = [const Home(), const Settings()];
-  int _pageindex = 0;
+class _StartScreenState extends State<StartScreen> {
+  late final List<Widget> _pages;
+  int _pageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the pages list and pass the user data to both screens
+    _pages = [
+      HomeScreen(user: widget.user),
+      Settings(user: widget.user), // <-- Pass user data here
+    ];
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _pageIndex = index;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        title: 'Rose',
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          // appBar: AppBar(
-          //   elevation: 0,
-          // backgroundColor: Colors.transparent),
-          body: _pages[_pageindex],
-          bottomNavigationBar: BottomNavigationBar(
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.settings), label: "settings")
-            ],
-            currentIndex: _pageindex,
-            onTap: (setValue) {
-              setState(() {
-                _pageindex = setValue;
-              });
-            },
+    return Scaffold(
+      body: IndexedStack(
+        index: _pageIndex,
+        children: _pages,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _pageIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home_filled),
+            label: "Home",
           ),
-        ));
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings),
+            label: "Settings",
+          ),
+        ],
+      ),
+    );
   }
 }

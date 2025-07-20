@@ -1,560 +1,274 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:pranayfunds/screens/chit.dart';
-import 'package:pranayfunds/screens/investments.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:pranayfunds/models/account_model.dart';
+import 'package:pranayfunds/models/transaction_model.dart';
+import 'package:pranayfunds/models/user_model.dart';
+import 'package:pranayfunds/services/api_service.dart';
 
-class Home extends StatelessWidget {
-  const Home({super.key});
+class HomeScreen extends StatefulWidget {
+  final UserModel user;
+  const HomeScreen({super.key, required this.user});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<Map<String, dynamic>> _dashboardData;
+  final ApiService _apiService = ApiService();
+
+  @override
+  void initState() {
+    super.initState();
+    _dashboardData = _fetchDashboardData();
+  }
+
+  /// Fetches account and transaction data, and corrects the balance if necessary.
+  Future<Map<String, dynamic>> _fetchDashboardData() async {
+    if (kDebugMode) {
+      print(
+          "--- 📊 [HomeScreen] Fetching dashboard data for customerId: ${widget.user.customerId} ---");
+    }
+    try {
+      AccountModel account =
+          await _apiService.getAccountDetails(widget.user.customerId);
+      final transactions = await _apiService.getTransactions(account.accountId);
+
+      // --- FIX FOR ACCOUNT BALANCE ---
+      // If the account balance is 0 but there are transactions, use the latest transaction's balance.
+      if (account.accountBalance == 0 && transactions.isNotEmpty) {
+        if (kDebugMode) {
+          print(
+              "--- 🛠️ [HomeScreen] Account balance is 0. Correcting from latest transaction. ---");
+        }
+        // Sort transactions by date to find the most recent one
+        transactions.sort(
+            (a, b) => b.transactionDateTime.compareTo(a.transactionDateTime));
+        final latestBalance =
+            double.tryParse(transactions.first.balanceAfter) ?? 0.0;
+
+        // Create a new AccountModel with the corrected balance
+        account = AccountModel(
+          accountId: account.accountId,
+          accountNumber: account.accountNumber,
+          accountBalance: latestBalance, // Use the corrected balance
+          customerId: account.customerId,
+          status: account.status,
+        );
+      }
+
+      if (kDebugMode) {
+        print(
+            "--- ✅ [HomeScreen] Data fetching complete. Final balance: ${account.accountBalance} ---");
+      }
+      return {'account': account, 'transactions': transactions};
+    } catch (e) {
+      if (kDebugMode) {
+        print("--- 🚨 [HomeScreen] Error fetching dashboard data: $e ---");
+      }
+      return Future.error(e.toString());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-          gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xffffffff), Color(0xffEFF1F5)],
-              stops: [0, 1])),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        title: Text('Welcome, ${widget.user.customerName.split(' ')[0]}!'),
+        backgroundColor: colorScheme.surface,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none_outlined),
+            onPressed: () {},
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _dashboardData,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text('Failed to load data: ${snapshot.error}'),
+              ),
+            );
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: Text('No data available.'));
+          }
+
+          final AccountModel account = snapshot.data!['account'];
+          final List<TransactionModel> transactions =
+              snapshot.data!['transactions'];
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              setState(() {
+                _dashboardData = _fetchDashboardData();
+              });
+            },
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               children: [
-                //welcome
-                const Padding(
-                  padding: EdgeInsets.only(top: 54.0, bottom: 15.0, left: 25.0),
-                  child: Text(
-                    'Welcome,',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                        color: Color(0xff171930),
-                        fontFamily: 'Inter',
-                        fontSize: 31,
-                        letterSpacing: 0,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2592592592592593),
-                  ),
-                ),
-
-                //card
-                SizedBox(
-                  height: 235,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 20.0),
-                    child: Container(
-                      width: 350,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(32),
-                          gradient: const LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Color(0xff654EA3), Color(0xffEAAFC8)],
-                              stops: [0.40, 1])),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                              padding:
-                                  const EdgeInsets.only(top: 32.0, left: 32.0),
-                              child: Stack(
-                                children: [
-                                  // image
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                                right: 10),
-                                            child: SizedBox(
-                                              height: 37,
-                                              width: 37,
-                                              child:
-                                                  // Round Acvatar
-                                                  ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(50),
-                                                child: Image.asset(
-                                                  "lib/images/avatar.png",
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-
-                                          // Heading
-                                          const Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'Pranay Kiran',
-                                                textAlign: TextAlign.left,
-                                                style: TextStyle(
-                                                    color: Color(0xffffffff),
-                                                    fontFamily: 'Inter',
-                                                    fontSize: 21,
-                                                    letterSpacing: 0,
-                                                    fontWeight:
-                                                        FontWeight.normal,
-                                                    height: 1.2592592592592593),
-                                              ),
-                                              // sub heading
-                                              Text(
-                                                'Rs. 17,00,500',
-                                                textAlign: TextAlign.left,
-                                                style: TextStyle(
-                                                    color: Color(0xffffffff),
-                                                    fontFamily: 'Inter',
-                                                    fontSize: 12,
-                                                    letterSpacing: 0,
-                                                    fontWeight:
-                                                        FontWeight.normal,
-                                                    height: 1.2941176470588236),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-
-                                      //Bottom Text
-                                      const Padding(
-                                        padding: EdgeInsets.only(top: 102),
-                                        child: Text('PRANAY FUNDS',
-                                            style: TextStyle(
-                                                color: Color(0xffffffff),
-                                                fontFamily: 'Inter',
-                                                fontSize: 26,
-                                                letterSpacing: 0,
-                                                fontWeight: FontWeight.bold,
-                                                height: 1)),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              )),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(
-                  height: 30,
-                ),
-
-                // card heading
-                const Padding(
-                  padding: EdgeInsets.only(left: 25.0),
-                  child: Text(
-                    'Schemes',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                        color: Color(0xff171930),
-                        fontFamily: 'Inter',
-                        fontSize: 21,
-                        letterSpacing: 0,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2592592592592593),
-                  ),
-                ),
-
-                // 2nd card
-                Padding(
-                  padding: const EdgeInsets.all(25.0),
-                  child: SizedBox(
-                    height: 170,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        color: const Color(0xffffffff),
-                      ),
-                      child: Column(children: [
-                        TextButton(
-                          onPressed: (() => {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const Investments()))
-                              }),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 20.0, top: 20.0),
-                                child: Row(children: [
-                                  SizedBox(
-                                    height: 37,
-                                    width: 37,
-                                    // png picture
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(50),
-                                        child: Image.asset(
-                                          "lib/images/investment.png",
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Investments',
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                            color: Color(0xff171930),
-                                            fontFamily: 'Inter',
-                                            fontSize: 17,
-                                            letterSpacing: 0,
-                                            fontWeight: FontWeight.normal,
-                                            height: 1),
-                                      ),
-                                      // sub text
-                                      Text(
-                                        'Gross Value',
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                            color: Color(0xff171930),
-                                            fontFamily: 'Inter',
-                                            fontSize: 12,
-                                            letterSpacing: 0,
-                                            fontWeight: FontWeight.normal,
-                                            height: 1.2941176470588236),
-                                      ),
-                                    ],
-                                  )
-                                ]),
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.only(
-                                    left: 20.0, top: 20.0),
-                                child: Padding(
-                                  padding: EdgeInsets.only(right: 11),
-                                  child: Row(children: [
-                                    Text(
-                                      'Rs. 12,00,000',
-                                      textAlign: TextAlign.left,
-                                      style: TextStyle(
-                                          color: Color(0xff171930),
-                                          fontFamily: 'Inter',
-                                          fontSize: 17,
-                                          letterSpacing: 0,
-                                          fontWeight: FontWeight.normal,
-                                          height: 1),
-                                    ),
-                                    SizedBox(
-                                      width: 6,
-                                    ),
-                                    Icon(
-                                      Icons.arrow_forward_ios,
-                                      color: Color(0xff171930),
-                                      size: 15,
-                                    )
-                                  ]),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // 2nd row
-                        TextButton(
-                          onPressed: (() => {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => const Chits()))
-                              }),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 20.0, top: 20.0),
-                                child: Row(children: [
-                                  SizedBox(
-                                    height: 37,
-                                    width: 37,
-                                    // png picture
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(right: 10),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(50),
-                                        child: Image.asset(
-                                          "lib/images/bag.png",
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Chit Funds',
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                            color: Color(0xff171930),
-                                            fontFamily: 'Inter',
-                                            fontSize: 17,
-                                            letterSpacing: 0,
-                                            fontWeight: FontWeight.normal,
-                                            height: 1),
-                                      ),
-                                      // sub text
-                                      Text(
-                                        'Gross Value',
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                            color: Color(0xff171930),
-                                            fontFamily: 'Inter',
-                                            fontSize: 12,
-                                            letterSpacing: 0,
-                                            fontWeight: FontWeight.normal,
-                                            height: 1.2941176470588236),
-                                      ),
-                                    ],
-                                  )
-                                ]),
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.only(
-                                    left: 20.0, top: 20.0),
-                                child: Padding(
-                                  padding: EdgeInsets.only(right: 11),
-                                  child: Row(children: [
-                                    Text(
-                                      'Rs. 70,000',
-                                      textAlign: TextAlign.left,
-                                      style: TextStyle(
-                                          color: Color(0xff171930),
-                                          fontFamily: 'Inter',
-                                          fontSize: 17,
-                                          letterSpacing: 0,
-                                          fontWeight: FontWeight.normal,
-                                          height: 1),
-                                    ),
-                                    SizedBox(
-                                      width: 6,
-                                    ),
-                                    Icon(
-                                      Icons.arrow_forward_ios,
-                                      color: Color(0xff171930),
-                                      size: 15,
-                                    )
-                                  ]),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      ]),
-                    ),
-                  ),
-                ),
-
-                // card heading
-                const Padding(
-                  padding: EdgeInsets.only(left: 25.0),
-                  child: Text(
-                    'Add Funds',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                        color: Color(0xff171930),
-                        fontFamily: 'Inter',
-                        fontSize: 21,
-                        letterSpacing: 0,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2592592592592593),
-                  ),
-                ),
-
-                // 3rd card
-                Padding(
-                  padding: const EdgeInsets.all(25.0),
-                  child: SizedBox(
-                    height: 250,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        color: const Color(0xffffffff),
-                      ),
-                      child: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.only(top: 20.0, left: 20.0),
-                              child: Text(
-                                'BANK TRANSFER',
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                    color: Color(0xff171930),
-                                    fontFamily: 'Inter',
-                                    fontSize: 17,
-                                    letterSpacing: 0,
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.2592592592592593),
-                              ),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 20.0, top: 20.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Account No.',
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                            color: Color(0xff171930),
-                                            fontFamily: 'Inter',
-                                            fontSize: 17,
-                                            letterSpacing: 0,
-                                            fontWeight: FontWeight.normal,
-                                            height: 1),
-                                      ),
-                                      // sub text
-                                      Text(
-                                        'IFSC Code',
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                            color: Color(0xff171930),
-                                            fontFamily: 'Inter',
-                                            fontSize: 12,
-                                            letterSpacing: 0,
-                                            fontWeight: FontWeight.normal,
-                                            height: 1.2941176470588236),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 20.0, top: 20.0),
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 15),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          '7613049198',
-                                          textAlign: TextAlign.right,
-                                          style: TextStyle(
-                                              color: Color(0xff171930),
-                                              fontFamily: 'Inter',
-                                              fontSize: 17,
-                                              letterSpacing: 0,
-                                              fontWeight: FontWeight.normal,
-                                              height: 1),
-                                        ),
-                                        // sub text
-                                        Text(
-                                          'KKBK0007475',
-                                          textAlign: TextAlign.right,
-                                          style: TextStyle(
-                                              color: Color(0xff171930),
-                                              fontFamily: 'Inter',
-                                              fontSize: 12,
-                                              letterSpacing: 0,
-                                              fontWeight: FontWeight.normal,
-                                              height: 1.2941176470588236),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // 2nd row
-                            Padding(
-                              padding: EdgeInsets.only(top: 40.0, left: 20.0),
-                              child: Text(
-                                'UPI TRANSFER',
-                                textAlign: TextAlign.left,
-                                style: TextStyle(
-                                    color: Color(0xff171930),
-                                    fontFamily: 'Inter',
-                                    fontSize: 17,
-                                    letterSpacing: 0,
-                                    fontWeight: FontWeight.w500,
-                                    height: 1.2592592592592593),
-                              ),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 20.0, top: 20.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'UPI Id.',
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                            color: Color(0xff171930),
-                                            fontFamily: 'Inter',
-                                            fontSize: 17,
-                                            letterSpacing: 0,
-                                            fontWeight: FontWeight.normal,
-                                            height: 1),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 20.0, top: 20.0),
-                                  child: Padding(
-                                    padding: EdgeInsets.only(right: 15),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          'kiranpranay12@okicici',
-                                          textAlign: TextAlign.right,
-                                          style: TextStyle(
-                                              color: Color(0xff171930),
-                                              fontFamily: 'Inter',
-                                              fontSize: 17,
-                                              letterSpacing: 0,
-                                              fontWeight: FontWeight.normal,
-                                              height: 1),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          ]),
-                    ),
-                  ),
-                )
+                _buildPortfolioCard(context, account.accountBalance),
+                const SizedBox(height: 24),
+                _buildQuickActions(context), // <-- NEW QUICK ACTIONS
+                const SizedBox(height: 24),
+                _buildSectionHeader(context, 'Recent Transactions'),
+                const SizedBox(height: 8),
+                _buildTransactionsList(transactions),
               ],
             ),
-          ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPortfolioCard(BuildContext context, double balance) {
+    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      color: Theme.of(context).colorScheme.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Account Balance',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              formatter.format(balance),
+              style: GoogleFonts.lato(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  // --- NEW WIDGET FOR QUICK ACTIONS ---
+  Widget _buildQuickActions(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _actionButton(context, Icons.add_card_outlined, 'Add Funds', () {}),
+        _actionButton(context, Icons.outbox_rounded, 'Withdraw', () {}),
+        _actionButton(context, Icons.receipt_long_outlined, 'Statement', () {}),
+      ],
+    );
+  }
+
+  Widget _actionButton(BuildContext context, IconData icon, String label,
+      VoidCallback onPressed) {
+    return Column(
+      children: [
+        FilledButton.tonal(
+          onPressed: onPressed,
+          style: FilledButton.styleFrom(
+            shape: const CircleBorder(),
+            padding: const EdgeInsets.all(16),
+          ),
+          child: Icon(icon, size: 28),
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
+      ],
+    );
+  }
+  // --- END OF NEW WIDGETS ---
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4.0),
+      child: Text(
+        title,
+        style: Theme.of(context)
+            .textTheme
+            .titleLarge
+            ?.copyWith(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildTransactionsList(List<TransactionModel> transactions) {
+    if (transactions.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Center(child: Text('No recent transactions.')),
+        ),
+      );
+    }
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+            color:
+                Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount:
+            transactions.length > 5 ? 5 : transactions.length, // Show max 5
+        separatorBuilder: (context, index) =>
+            const Divider(height: 1, indent: 16, endIndent: 16),
+        itemBuilder: (context, index) {
+          final transaction = transactions[index];
+          final isCredit = transaction.transactionType == 'credit';
+          final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+
+          return ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            leading: CircleAvatar(
+              backgroundColor:
+                  (isCredit ? Colors.green : Colors.red).withOpacity(0.1),
+              child: Icon(
+                isCredit
+                    ? Icons.arrow_downward_rounded
+                    : Icons.arrow_upward_rounded,
+                color: isCredit ? Colors.green.shade700 : Colors.red.shade700,
+              ),
+            ),
+            title: Text(
+              isCredit ? 'Credit' : 'Debit',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+                DateFormat.yMMMd().format(transaction.transactionDateTime)),
+            trailing: Text(
+              formatter.format(transaction.amount),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isCredit ? Colors.green.shade700 : Colors.red.shade700,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

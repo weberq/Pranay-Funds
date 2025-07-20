@@ -1,250 +1,145 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:pranayfunds/screens/start.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:pranayfunds/models/user_model.dart';
 
+// Corrected class name from SettingsScreen to Settings
 class Settings extends StatelessWidget {
-  const Settings({super.key});
+  final UserModel user;
+  const Settings({super.key, required this.user});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-          gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xffffffff), Color(0xffEFF1F5)],
-              stops: [0, 1])),
-      child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: SafeArea(
-            child: SingleChildScrollView(
-                child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Scaffold(
+      backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Settings'),
+        backgroundColor: colorScheme.surface,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          // User Profile Card
+          Card(
+            elevation: 0,
+            color: colorScheme.surfaceVariant.withOpacity(0.5),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios),
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const StartScreen()));
-                        },
-                      ),
-                      // SizedBox(
-                      //   child: SvgPicture.asset("lib/images/settings.svg",
-                      //       height: 30,
-                      //       width: 20,
-                      //       semanticsLabel: 'SVG From asset folder.'),
-                      // )
-                    ],
-                  ),
-                  // Round Acvatar
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(50),
-                    child: Image.asset(
-                      "lib/images/avatar.png",
-                      fit: BoxFit.cover,
-                      height: 80,
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: colorScheme.primaryContainer,
+                    child: Text(
+                      user.customerName.isNotEmpty ? user.customerName[0] : 'U',
+                      style: textTheme.headlineSmall
+                          ?.copyWith(color: colorScheme.onPrimaryContainer),
                     ),
                   ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  const Text(
-                    "Pranay Kiran",
-                    style: TextStyle(
-                        color: Color(0xff000000),
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  // menu row
-                  const Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "STATS",
-                          style: TextStyle(
-                              color: Color(0xff587EFF),
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          "ACHIEVEMENTS",
-                          style: TextStyle(
-                              color: Color(0xff9E9FA1),
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          "ACTIVITY",
-                          style: TextStyle(
-                              color: Color(0xff9E9FA1),
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // two cards row
-                  Padding(
-                    padding: const EdgeInsets.all(15),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // card 1
-                        Container(
-                          height: 100,
-                          width: 150,
-                          decoration: BoxDecoration(
-                              color: const Color(0xffFFFFFF),
-                              borderRadius: BorderRadius.circular(20)),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  SizedBox(
-                                    child: SvgPicture.asset(
-                                        "lib/images/flash.svg",
-                                        height: 40,
-                                        color: const Color(0xffFF4080),
-                                        semanticsLabel:
-                                            'SVG From asset folder.'),
-                                  ),
-                                  const Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "55",
-                                        style: TextStyle(
-                                            color: Color(0xff000000),
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(
-                                        height: 2,
-                                      ),
-                                      Text(
-                                        "Withdrals",
-                                        style: TextStyle(
-                                            color: Color(0xff9E9FA1),
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-                        // card 2
-                        Container(
-                          height: 100,
-                          width: 150,
-                          decoration: BoxDecoration(
-                              color: const Color(0xffFFFFFF),
-                              borderRadius: BorderRadius.circular(20)),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  SizedBox(
-                                    child: SvgPicture.asset(
-                                        "lib/images/flash.svg",
-                                        height: 40,
-                                        color: const Color(0xffFF4080),
-                                        semanticsLabel:
-                                            'SVG From asset folder.'),
-                                  ),
-                                  const Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "105",
-                                        style: TextStyle(
-                                            color: Color(0xff000000),
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(
-                                        height: 2,
-                                      ),
-                                      Text(
-                                        "Credits",
-                                        style: TextStyle(
-                                            color: Color(0xff9E9FA1),
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  // small heading
-                  const Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                  const SizedBox(width: 16),
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "ACHIEVEMENTS",
-                        textAlign: TextAlign.left,
-                        style: TextStyle(
-                            color: Color(0xff9098A3),
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold),
+                        user.customerName,
+                        style: textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Username: ${user.username}',
+                        style: textTheme.bodyMedium
+                            ?.copyWith(color: colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  // A big card
-                  Container(
-                    height: 300,
-                    width: 320,
-                    decoration: BoxDecoration(
-                        color: const Color(0xffFFFFFF),
-                        borderRadius: BorderRadius.circular(20)),
-                    child: SizedBox(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(50),
-                        child: Image.asset(
-                          "lib/images/badge.png",
-                          height: 3,
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
-            )),
-          )),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Menu Items
+          _buildSectionHeader('Account', textTheme),
+          _buildSettingsTile(
+            context: context,
+            icon: Icons.person_outline,
+            title: 'Edit Profile',
+            onTap: () {},
+          ),
+          _buildSettingsTile(
+            context: context,
+            icon: Icons.lock_outline,
+            title: 'Change MPIN',
+            onTap: () {},
+          ),
+          _buildSettingsTile(
+            context: context,
+            icon: Icons.devices_other_outlined,
+            title: 'Manage Devices',
+            onTap: () {},
+          ),
+
+          const Divider(height: 32),
+
+          _buildSectionHeader('Security', textTheme),
+          SwitchListTile(
+            title:
+                Text('Two-Factor Authentication', style: textTheme.titleMedium),
+            secondary: const Icon(Icons.shield_outlined),
+            value: false, // Placeholder
+            onChanged: (bool value) {
+              // TODO: Implement 2FA logic
+            },
+          ),
+
+          const Divider(height: 32),
+
+          // Logout Button
+          ListTile(
+            leading: Icon(Icons.logout, color: colorScheme.error),
+            title: Text(
+              'Logout',
+              style: textTheme.titleMedium?.copyWith(color: colorScheme.error),
+            ),
+            onTap: () {
+              // Navigate back to the login screen, clearing all other screens
+              Navigator.pushNamedAndRemoveUntil(
+                  context, '/login', (route) => false);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, TextTheme textTheme) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, bottom: 8),
+      child: Text(
+        title.toUpperCase(),
+        style: textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Colors.grey.shade600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+      onTap: onTap,
     );
   }
 }
