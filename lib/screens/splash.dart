@@ -14,7 +14,7 @@ class _SplashState extends State<Splash> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(seconds: 3), () {
-      Navigator.popAndPushNamed(context, '/home');
+      Navigator.popAndPushNamed(context, '/login');
     });
   }
 
