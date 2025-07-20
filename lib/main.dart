@@ -5,6 +5,7 @@ import 'package:pranayfunds/screens/splash.dart';
 import 'package:pranayfunds/screens/start.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 

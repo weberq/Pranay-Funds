@@ -47,5 +47,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+<string>Please authenticate to access your Pranay Funds account securely.</string>
 </dict>
 </plist>
