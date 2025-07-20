@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pranayfunds/models/account_model.dart';
 import 'package:pranayfunds/models/transaction_model.dart';
 import 'package:pranayfunds/models/user_model.dart';
+import 'package:pranayfunds/screens/add_funds_screen.dart';
 import 'package:pranayfunds/screens/statement_screen.dart';
 import 'package:pranayfunds/services/api_service.dart';
 
@@ -124,8 +125,8 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildPortfolioCard(context, account.accountBalance),
                 const SizedBox(height: 24),
-                // --- FIX IS HERE: Passing the real accountId ---
-                _buildQuickActions(context, account.accountId),
+                // This is the corrected call
+                _buildQuickActions(context, account),
                 const SizedBox(height: 24),
                 _buildSectionHeader(context, 'Recent Transactions'),
                 const SizedBox(height: 8),
@@ -168,23 +169,44 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- FIX IS HERE: Accepting the accountId parameter ---
-  Widget _buildQuickActions(BuildContext context, int accountId) {
+  Widget _buildQuickActions(BuildContext context, AccountModel account) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _actionButton(context, Icons.add_card_outlined, 'Add Funds', () {}),
+        _actionButton(
+          context,
+          Icons.add_card_outlined,
+          'Add Funds',
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddFundsScreen(account: account),
+              ),
+            ).then((result) {
+              if (result == true) {
+                setState(() {
+                  _dashboardData = _fetchDashboardData();
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Transaction submitted for approval!')),
+                );
+              }
+            });
+          },
+        ),
         _actionButton(context, Icons.outbox_rounded, 'Withdraw', () {}),
         _actionButton(
           context,
           Icons.receipt_long_outlined,
           'Statement',
           () {
-            // --- FIX IS HERE: Using the real accountId ---
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => StatementScreen(accountId: accountId),
+                builder: (context) =>
+                    StatementScreen(accountId: account.accountId),
               ),
             );
           },

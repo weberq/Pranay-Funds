@@ -9,6 +9,7 @@ class ApiService {
   final String _baseUrl = AppConfig.baseUrl;
   final String _apiKey = AppConfig.apiKey;
 
+  // ... (keep _logApiCall, getAccountDetails, and getTransactions methods)
   void _logApiCall(String endpoint, http.Response response) {
     if (kDebugMode) {
       print('--- 📞 API Call: $endpoint ---');
@@ -37,16 +38,10 @@ class ApiService {
         'Failed to load account details for customer ID: $customerId');
   }
 
-  /// Fetches transactions with optional filters.
   Future<List<TransactionModel>> getTransactions(int accountId,
       {Map<String, String>? filters}) async {
-    final queryParameters = {
-      'account_id': accountId.toString(),
-    };
-
-    if (filters != null) {
-      queryParameters.addAll(filters);
-    }
+    final queryParameters = {'account_id': accountId.toString()};
+    if (filters != null) queryParameters.addAll(filters);
 
     final url = Uri.parse('$_baseUrl/transactions/list')
         .replace(queryParameters: queryParameters);
@@ -55,25 +50,47 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
-      // --- FIX IS HERE ---
-      // Check for the specific "No transactions found" error from the API
       if (body['status'] == 'error' &&
           body['message'] == 'No transactions found') {
-        return []; // Return an empty list, not an error
+        return [];
       }
-
       if (body['status'] == 'success' && body['data'] != null) {
-        final List<dynamic> transactionData = body['data'];
-        return transactionData
+        return (body['data'] as List)
             .map((json) => TransactionModel.fromJson(json))
             .toList();
       }
-      // Also handle cases where the API might return success but an empty data list
-      if (body['status'] == 'success') {
-        return [];
-      }
+      if (body['status'] == 'success') return [];
     }
-    // For all other errors, throw an exception
     throw Exception('Failed to load transactions for account ID: $accountId');
+  }
+
+  // --- NEW METHOD FOR SUBMITTING A MANUAL TRANSACTION ---
+  Future<bool> submitManualTransaction({
+    required String accountNumber,
+    required double amount,
+    required String reference,
+  }) async {
+    final url = Uri.parse('$_baseUrl/transactions/update');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': _apiKey,
+      },
+      body: jsonEncode({
+        'account_number': accountNumber,
+        'amount': amount,
+        'transaction_type': 'credit', // Always credit for "Add Funds"
+        'reference': reference,
+        'status': 'pending', // Submitted transactions are pending approval
+      }),
+    );
+    _logApiCall('/transactions/update', response);
+
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+      return body['status'] == 'success';
+    }
+    return false;
   }
 }
