@@ -24,7 +24,7 @@ class Settings extends StatelessWidget {
           // User Profile Card
           Card(
             elevation: 0,
-            color: colorScheme.surfaceVariant.withOpacity(0.5),
+            color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(

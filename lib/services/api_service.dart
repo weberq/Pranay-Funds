@@ -9,7 +9,6 @@ class ApiService {
   final String _baseUrl = AppConfig.baseUrl;
   final String _apiKey = AppConfig.apiKey;
 
-  /// Helper to log requests and responses
   void _logApiCall(String endpoint, http.Response response) {
     if (kDebugMode) {
       print('--- 📞 API Call: $endpoint ---');
@@ -23,14 +22,11 @@ class ApiService {
   Future<AccountModel> getAccountDetails(int customerId) async {
     final url = Uri.parse('$_baseUrl/accounts/list?customer_id=$customerId');
     final response = await http.get(url, headers: {'X-API-KEY': _apiKey});
-
     _logApiCall('/accounts/list', response);
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       if (body['status'] == 'success' && body['data'] != null) {
-        // --- FIX IS HERE ---
-        // API returns a list, even for a single customer. We take the first element.
         final List<dynamic> accountData = body['data'];
         if (accountData.isNotEmpty) {
           return AccountModel.fromJson(accountData.first);
@@ -41,21 +37,43 @@ class ApiService {
         'Failed to load account details for customer ID: $customerId');
   }
 
-  Future<List<TransactionModel>> getTransactions(int accountId) async {
-    final url = Uri.parse('$_baseUrl/transactions/list?account_id=$accountId');
-    final response = await http.get(url, headers: {'X-API-KEY': _apiKey});
+  /// Fetches transactions with optional filters.
+  Future<List<TransactionModel>> getTransactions(int accountId,
+      {Map<String, String>? filters}) async {
+    final queryParameters = {
+      'account_id': accountId.toString(),
+    };
 
+    if (filters != null) {
+      queryParameters.addAll(filters);
+    }
+
+    final url = Uri.parse('$_baseUrl/transactions/list')
+        .replace(queryParameters: queryParameters);
+    final response = await http.get(url, headers: {'X-API-KEY': _apiKey});
     _logApiCall('/transactions/list', response);
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
+      // --- FIX IS HERE ---
+      // Check for the specific "No transactions found" error from the API
+      if (body['status'] == 'error' &&
+          body['message'] == 'No transactions found') {
+        return []; // Return an empty list, not an error
+      }
+
       if (body['status'] == 'success' && body['data'] != null) {
         final List<dynamic> transactionData = body['data'];
         return transactionData
             .map((json) => TransactionModel.fromJson(json))
             .toList();
       }
+      // Also handle cases where the API might return success but an empty data list
+      if (body['status'] == 'success') {
+        return [];
+      }
     }
+    // For all other errors, throw an exception
     throw Exception('Failed to load transactions for account ID: $accountId');
   }
 }
