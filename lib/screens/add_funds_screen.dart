@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:pranayfunds/models/account_model.dart';
+import 'package:pranayfunds/models/transaction_model.dart';
 import 'package:pranayfunds/services/api_service.dart';
 
 class AddFundsScreen extends StatefulWidget {
@@ -19,6 +21,29 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
   final ApiService _apiService = ApiService();
   bool _isLoading = false;
 
+  // This Future holds the list of pending deposits
+  late Future<List<TransactionModel>> _pendingDepositsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch the pending deposits when the screen first loads
+    _fetchPendingDeposits();
+  }
+
+  /// Fetches only the credit transactions that have a 'pending' status.
+  void _fetchPendingDeposits() {
+    setState(() {
+      _pendingDepositsFuture = _apiService
+          .getTransactions(widget.account.accountId)
+          .then((transactions) => transactions
+              .where(
+                  (t) => t.transactionType == 'credit' && t.status == 'pending')
+              .toList());
+    });
+  }
+
+  /// Copies the provided text to the clipboard and shows a confirmation message.
   void _copyToClipboard(String text, String fieldName) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -26,9 +51,9 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
     );
   }
 
+  /// Validates the form and submits the new transaction to the API.
   Future<void> _submitTransaction() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     final success = await _apiService.submitManualTransaction(
@@ -40,7 +65,15 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (success) {
-        Navigator.pop(context, true); // Pop and return true for success
+        // Clear the form fields for the next entry
+        _amountController.clear();
+        _referenceController.clear();
+        // Refresh the list of pending deposits to show the new one
+        _fetchPendingDeposits();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Submission successful! Awaiting approval.')),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Submission failed. Please try again.')),
@@ -58,6 +91,9 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // This section will display the list of pending transactions
+            _buildPendingDepositsSection(),
+            const SizedBox(height: 24),
             _buildInstructionsCard(),
             const SizedBox(height: 24),
             _buildSubmissionForm(),
@@ -67,6 +103,67 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
     );
   }
 
+  /// Builds the UI section that displays pending deposits.
+  Widget _buildPendingDepositsSection() {
+    return FutureBuilder<List<TransactionModel>>(
+      future: _pendingDepositsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        // If there are no pending deposits, don't show anything
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        final pending = snapshot.data!;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Pending Deposits",
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: pending.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                return _buildPendingTransactionCard(pending[index]);
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
+        );
+      },
+    );
+  }
+
+  /// A styled card for displaying a single pending transaction.
+  Widget _buildPendingTransactionCard(TransactionModel transaction) {
+    final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+            color:
+                Theme.of(context).colorScheme.outlineVariant.withOpacity(0.7)),
+      ),
+      child: ListTile(
+        leading: const Icon(Icons.hourglass_top_rounded, color: Colors.orange),
+        title: Text(formatter.format(transaction.amount),
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(
+            'Submitted on ${DateFormat.yMMMd().format(transaction.transactionDateTime)}'),
+        trailing: const Chip(label: Text('Pending')),
+      ),
+    );
+  }
+
+  /// The card that shows the bank details for the manual transfer.
   Widget _buildInstructionsCard() {
     return Card(
       elevation: 0,
@@ -99,6 +196,7 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
     );
   }
 
+  /// The form where the user submits their transaction details.
   Widget _buildSubmissionForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,6 +265,7 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
     );
   }
 
+  /// A helper widget for displaying a row of information with a copy button.
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),

@@ -7,6 +7,7 @@ import 'package:pranayfunds/models/transaction_model.dart';
 import 'package:pranayfunds/models/user_model.dart';
 import 'package:pranayfunds/screens/add_funds_screen.dart';
 import 'package:pranayfunds/screens/statement_screen.dart';
+import 'package:pranayfunds/screens/withdraw_funds_screen.dart';
 import 'package:pranayfunds/services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -39,7 +40,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final transactions = await _apiService.getTransactions(account.accountId);
 
       // --- FIX FOR ACCOUNT BALANCE ---
-      // If the account balance is 0 but there are transactions, use the latest transaction's balance.
+      // If the account balance from the API is 0 but there are transactions,
+      // use the latest transaction's balance_after field.
       if (account.accountBalance == 0 && transactions.isNotEmpty) {
         if (kDebugMode) {
           print(
@@ -48,10 +50,12 @@ class _HomeScreenState extends State<HomeScreen> {
         // Sort transactions by date to find the most recent one
         transactions.sort(
             (a, b) => b.transactionDateTime.compareTo(a.transactionDateTime));
-        final latestBalance =
-            double.tryParse(transactions.first.balanceAfter) ?? 0.0;
 
-        // Create a new AccountModel with the corrected balance
+        // Use the balance_after from the very first transaction in the sorted list
+        final latestBalance =
+            double.tryParse(transactions.first.balanceAfter ?? '0.0') ?? 0.0;
+
+        // Create a new AccountModel instance with the corrected balance
         account = AccountModel(
           accountId: account.accountId,
           accountNumber: account.accountNumber,
@@ -125,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildPortfolioCard(context, account.accountBalance),
                 const SizedBox(height: 24),
-                // This is the corrected call
+                // --- CORRECTED WIDGET CALL ---
                 _buildQuickActions(context, account),
                 const SizedBox(height: 24),
                 _buildSectionHeader(context, 'Recent Transactions'),
@@ -169,6 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // --- CORRECTED WIDGET DEFINITION ---
   Widget _buildQuickActions(BuildContext context, AccountModel account) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -196,7 +201,19 @@ class _HomeScreenState extends State<HomeScreen> {
             });
           },
         ),
-        _actionButton(context, Icons.outbox_rounded, 'Withdraw', () {}),
+        _actionButton(
+          context,
+          Icons.outbox_rounded,
+          'Withdraw',
+          () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => WithdrawFundsScreen(account: account)),
+            ).then(
+                (_) => setState(() => _dashboardData = _fetchDashboardData()));
+          },
+        ),
         _actionButton(
           context,
           Icons.receipt_long_outlined,

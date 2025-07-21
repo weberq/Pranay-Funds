@@ -3,14 +3,16 @@ class TransactionModel {
   final String transactionType; // "credit" or "debit"
   final DateTime transactionDateTime;
   final int amount;
-  final String balanceAfter;
+  final String? balanceAfter; // Can be null for pending transactions
+  final String status; // e.g., "pending", "posted"
 
   TransactionModel({
     required this.transactionId,
     required this.transactionType,
     required this.transactionDateTime,
     required this.amount,
-    required this.balanceAfter,
+    required this.status,
+    this.balanceAfter,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class TransactionModel {
       transactionDateTime: DateTime.parse(json['transaction_datetime']),
       amount: json['amount'],
       balanceAfter: json['balance_after'],
+      status: json['status'],
     );
   }
 }

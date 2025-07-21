@@ -9,7 +9,6 @@ class ApiService {
   final String _baseUrl = AppConfig.baseUrl;
   final String _apiKey = AppConfig.apiKey;
 
-  // ... (keep _logApiCall, getAccountDetails, and getTransactions methods)
   void _logApiCall(String endpoint, http.Response response) {
     if (kDebugMode) {
       print('--- 📞 API Call: $endpoint ---');
@@ -24,14 +23,12 @@ class ApiService {
     final url = Uri.parse('$_baseUrl/accounts/list?customer_id=$customerId');
     final response = await http.get(url, headers: {'X-API-KEY': _apiKey});
     _logApiCall('/accounts/list', response);
-
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       if (body['status'] == 'success' && body['data'] != null) {
         final List<dynamic> accountData = body['data'];
-        if (accountData.isNotEmpty) {
+        if (accountData.isNotEmpty)
           return AccountModel.fromJson(accountData.first);
-        }
       }
     }
     throw Exception(
@@ -42,18 +39,14 @@ class ApiService {
       {Map<String, String>? filters}) async {
     final queryParameters = {'account_id': accountId.toString()};
     if (filters != null) queryParameters.addAll(filters);
-
     final url = Uri.parse('$_baseUrl/transactions/list')
         .replace(queryParameters: queryParameters);
     final response = await http.get(url, headers: {'X-API-KEY': _apiKey});
     _logApiCall('/transactions/list', response);
-
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       if (body['status'] == 'error' &&
-          body['message'] == 'No transactions found') {
-        return [];
-      }
+          body['message'] == 'No transactions found') return [];
       if (body['status'] == 'success' && body['data'] != null) {
         return (body['data'] as List)
             .map((json) => TransactionModel.fromJson(json))
@@ -64,7 +57,6 @@ class ApiService {
     throw Exception('Failed to load transactions for account ID: $accountId');
   }
 
-  // --- NEW METHOD FOR SUBMITTING A MANUAL TRANSACTION ---
   Future<bool> submitManualTransaction({
     required String accountNumber,
     required double amount,
@@ -80,16 +72,59 @@ class ApiService {
       body: jsonEncode({
         'account_number': accountNumber,
         'amount': amount,
-        'transaction_type': 'credit', // Always credit for "Add Funds"
+        'transaction_type': 'credit',
         'reference': reference,
-        'status': 'pending', // Submitted transactions are pending approval
+        'status': 'pending',
+        'channel': 'mobile_app',
+        'transaction_datetime': DateTime.now().toIso8601String(),
       }),
     );
-    _logApiCall('/transactions/update', response);
-
+    _logApiCall('/transactions/update (credit)', response);
     if (response.statusCode == 200) {
-      final body = jsonDecode(response.body);
-      return body['status'] == 'success';
+      if (response.body.trim().startsWith('{')) {
+        final body = jsonDecode(response.body);
+        // --- THE FIX IS HERE ---
+        // A successful submission now returns a status of 'pending'.
+        return body['status'] == 'pending' &&
+            body.containsKey('transaction_id');
+      }
+    }
+    return false;
+  }
+
+  Future<bool> submitWithdrawalRequest(
+      {required String accountNumber, required double amount}) async {
+    final url = Uri.parse('$_baseUrl/transactions/update');
+    final response = await http.post(url,
+        headers: {'Content-Type': 'application/json', 'X-API-KEY': _apiKey},
+        body: jsonEncode({
+          'account_number': accountNumber,
+          'amount': amount,
+          'transaction_type': 'debit',
+          'status': 'pending',
+          'channel': 'mobile_app',
+          'transaction_datetime': DateTime.now().toIso8601String(),
+        }));
+    _logApiCall('/transactions/update (debit)', response);
+    if (response.statusCode == 200) {
+      if (response.body.trim().startsWith('{')) {
+        final body = jsonDecode(response.body);
+        // --- THE FIX IS HERE ---
+        return body['status'] == 'pending' &&
+            body.containsKey('transaction_id');
+      }
+    }
+    return false;
+  }
+
+  Future<bool> deleteTransaction(int transactionId) async {
+    final url = Uri.parse('$_baseUrl/transactions/delete?id=$transactionId');
+    final response = await http.get(url, headers: {'X-API-KEY': _apiKey});
+    _logApiCall('/transactions/delete', response);
+    if (response.statusCode == 200) {
+      if (response.body.trim().startsWith('{')) {
+        return jsonDecode(response.body)['status'] == 'success';
+      }
     }
     return false;
   }
