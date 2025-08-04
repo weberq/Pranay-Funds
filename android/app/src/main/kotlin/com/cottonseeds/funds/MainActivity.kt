@@ -1,4 +1,4 @@
-package com.example.pranayfunds
+package com.cottonseeds.funds
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
