@@ -44,6 +44,8 @@ dependencies:
   intl: ^0.20.2
   shared_preferences: ^2.2.3
   local_auth: ^2.2.0
+  flutter_launcher_icons: ^0.14.4
+  dynamic_color: ^1.8.1
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +81,16 @@ flutter:
     - lib/images/flash.svg
     - lib/images/badge.png
     - lib/images/arrowup.png
+
+flutter_launcher_icons:
+  android: "launcher_icon" # The name of the icon file for Android
+  ios: true # Generate icons for iOS
+  image_path: "lib/images/logo.png" # <-- The path to your beautiful SVG!
+  min_sdk_android: 21 # Your app's minimum Android SDK version
+  web:
+    generate: true
+  windows:
+    generate: true
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
