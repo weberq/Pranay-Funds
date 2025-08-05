@@ -1,10 +1,10 @@
 class TransactionModel {
   final int transactionId;
-  final String transactionType; // "credit" or "debit"
+  final String transactionType;
   final DateTime transactionDateTime;
-  final int amount;
-  final String? balanceAfter; // Can be null for pending transactions
-  final String status; // e.g., "pending", "posted"
+  final double amount; // <-- FIX: Changed from int to double
+  final String? balanceAfter;
+  final String status;
 
   TransactionModel({
     required this.transactionId,
@@ -20,7 +20,7 @@ class TransactionModel {
       transactionId: json['transaction_id'],
       transactionType: json['transaction_type'],
       transactionDateTime: DateTime.parse(json['transaction_datetime']),
-      amount: json['amount'],
+      amount: (json['amount'] as num).toDouble(),
       balanceAfter: json['balance_after'],
       status: json['status'],
     );
