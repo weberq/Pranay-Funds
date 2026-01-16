@@ -7,6 +7,6 @@ class AppConfig {
   //     'http://localhost/apis-funds'; // <-- Use your local server URL for development
 
   // Your X-API-KEY
-  static const String apiKey =
-      'd48fd254-f6ff-465e-b3f0-6e4ca965be43'; // <-- IMPORTANT: Replace with your actual key
+  // Defined in launch.json or passed via --dart-define
+  static const String apiKey = String.fromEnvironment('API_KEY');
 }

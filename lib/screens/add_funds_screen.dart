@@ -167,7 +167,10 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
   Widget _buildInstructionsCard() {
     return Card(
       elevation: 0,
-      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+      color: Theme.of(context)
+          .colorScheme
+          .surfaceContainerHighest
+          .withOpacity(0.5),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -226,10 +229,12 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty)
+                  if (value == null || value.isEmpty) {
                     return 'Please enter an amount.';
-                  if (double.tryParse(value) == null)
+                  }
+                  if (double.tryParse(value) == null) {
                     return 'Please enter a valid number.';
+                  }
                   return null;
                 },
               ),
@@ -242,8 +247,9 @@ class _AddFundsScreenState extends State<AddFundsScreen> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty)
+                  if (value == null || value.isEmpty) {
                     return 'Please enter a reference number.';
+                  }
                   return null;
                 },
               ),

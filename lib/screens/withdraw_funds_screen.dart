@@ -115,16 +115,16 @@ class _WithdrawFundsScreenState extends State<WithdrawFundsScreen> {
   }
 
   Widget _buildNewRequestForm() {
-    final _formKey = GlobalKey<FormState>();
-    final _amountController = TextEditingController();
-    bool _isLoading = false;
+    final formKey = GlobalKey<FormState>();
+    final amountController = TextEditingController();
+    bool isLoading = false;
 
     return StatefulBuilder(
       builder: (context, setFormState) {
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Form(
-            key: _formKey,
+            key: formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -135,7 +135,7 @@ class _WithdrawFundsScreenState extends State<WithdrawFundsScreen> {
                     'Enter the amount you wish to withdraw. The request will be sent for approval.'),
                 const SizedBox(height: 24),
                 TextFormField(
-                  controller: _amountController,
+                  controller: amountController,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
@@ -146,12 +146,14 @@ class _WithdrawFundsScreenState extends State<WithdrawFundsScreen> {
                         'Available balance: ${NumberFormat.currency(locale: 'en_IN', symbol: '₹').format(widget.account.accountBalance)}',
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return 'Please enter an amount.';
+                    }
                     final amount = double.tryParse(value);
                     if (amount == null) return 'Please enter a valid number.';
-                    if (amount > widget.account.accountBalance)
+                    if (amount > widget.account.accountBalance) {
                       return 'Amount exceeds available balance.';
+                    }
                     if (amount <= 0) return 'Amount must be greater than zero.';
                     return null;
                   },
@@ -161,15 +163,15 @@ class _WithdrawFundsScreenState extends State<WithdrawFundsScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _isLoading
+                    onPressed: isLoading
                         ? null
                         : () async {
-                            if (!_formKey.currentState!.validate()) return;
-                            setFormState(() => _isLoading = true);
+                            if (!formKey.currentState!.validate()) return;
+                            setFormState(() => isLoading = true);
                             final success =
                                 await _apiService.submitWithdrawalRequest(
                               accountNumber: widget.account.accountNumber,
-                              amount: double.parse(_amountController.text),
+                              amount: double.parse(amountController.text),
                             );
                             if (success) {
                               _checkForPendingWithdrawal(); // Refresh to show pending status
@@ -180,9 +182,9 @@ class _WithdrawFundsScreenState extends State<WithdrawFundsScreen> {
                                         'Request failed. Please try again.')),
                               );
                             }
-                            setFormState(() => _isLoading = false);
+                            setFormState(() => isLoading = false);
                           },
-                    child: _isLoading
+                    child: isLoading
                         ? const CircularProgressIndicator()
                         : const Text('Submit Request'),
                   ),

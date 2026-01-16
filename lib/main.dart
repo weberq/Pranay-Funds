@@ -1,9 +1,7 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:pranayfunds/models/user_model.dart';
-import 'package:pranayfunds/screens/home.dart';
 import 'package:pranayfunds/screens/login.dart';
-import 'package:pranayfunds/screens/settings.dart';
 import 'package:pranayfunds/screens/splash.dart';
 import 'package:pranayfunds/screens/start.dart';
 

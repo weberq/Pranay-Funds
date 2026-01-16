@@ -27,8 +27,9 @@ class ApiService {
       final body = jsonDecode(response.body);
       if (body['status'] == 'success' && body['data'] != null) {
         final List<dynamic> accountData = body['data'];
-        if (accountData.isNotEmpty)
+        if (accountData.isNotEmpty) {
           return AccountModel.fromJson(accountData.first);
+        }
       }
     }
     throw Exception(
@@ -46,7 +47,9 @@ class ApiService {
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
       if (body['status'] == 'error' &&
-          body['message'] == 'No transactions found') return [];
+          body['message'] == 'No transactions found') {
+        return [];
+      }
       if (body['status'] == 'success' && body['data'] != null) {
         return (body['data'] as List)
             .map((json) => TransactionModel.fromJson(json))
