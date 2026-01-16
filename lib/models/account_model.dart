@@ -15,12 +15,13 @@ class AccountModel {
 
   factory AccountModel.fromJson(Map<String, dynamic> json) {
     return AccountModel(
-      accountId: json['account_id'],
-      accountNumber: json['account_number'],
+      accountId: int.tryParse(json['account_id'].toString()) ?? 0,
+      accountNumber: json['account_number'].toString(),
       // API returns 0, so we ensure it's a double
-      accountBalance: (json['account_balance'] as num).toDouble(),
-      customerId: json['customer_id'],
-      status: json['status'],
+      accountBalance:
+          (double.tryParse(json['account_balance'].toString()) ?? 0.0),
+      customerId: int.tryParse(json['customer_id'].toString()) ?? 0,
+      status: json['status'] ?? 'unknown',
     );
   }
 }

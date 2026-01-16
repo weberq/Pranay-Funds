@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:pranayfunds/configs/app_config.dart';
 import 'package:pranayfunds/models/account_model.dart';
+import 'package:pranayfunds/models/reward_wallet_model.dart';
 import 'package:pranayfunds/models/transaction_model.dart';
 
 class ApiService {
@@ -130,5 +131,46 @@ class ApiService {
       }
     }
     return false;
+  }
+
+  // --- REWARDS API ---
+
+  Future<RewardWalletModel?> getRewardWallet(int customerId) async {
+    final url = Uri.parse('$_baseUrl/rewards/list?custid=$customerId');
+    final response = await http.get(url, headers: {'X-API-KEY': _apiKey});
+    _logApiCall('/rewards/list', response);
+
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+      if (body['status'] == 'success' && body['data'] != null) {
+        return RewardWalletModel.fromJson(body['data']);
+      }
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>> transferRewards({
+    required int walletId,
+    required String accountNumber,
+    required double amount,
+  }) async {
+    final url = Uri.parse('$_baseUrl/reward_transactions/transfer');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json', 'X-API-KEY': _apiKey},
+      body: jsonEncode({
+        'wallet_id': walletId,
+        'account_number': accountNumber,
+        'amount': amount,
+        'channel': 'mobile_app',
+        'reference': 'Mobile App Transfer',
+      }),
+    );
+    _logApiCall('/reward_transactions/transfer', response);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to transfer rewards');
   }
 }

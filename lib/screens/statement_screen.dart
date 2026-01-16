@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:pranayfunds/models/transaction_model.dart';
+import 'package:pranayfunds/models/user_model.dart'; // Import
 import 'package:pranayfunds/services/api_service.dart';
 
 class StatementScreen extends StatefulWidget {
-  final int accountId;
-  const StatementScreen({super.key, required this.accountId});
+  final UserModel user; // Changed to accept UserModel
+  const StatementScreen({super.key, required this.user});
 
   @override
   State<StatementScreen> createState() => _StatementScreenState();
@@ -26,9 +27,16 @@ class _StatementScreenState extends State<StatementScreen> {
 
   void _fetchTransactions() {
     setState(() {
-      _transactionsFuture = _apiService.getTransactions(widget.accountId,
-          filters: _currentFilters);
+      _transactionsFuture = _loadAccountAndTransactions(); // New loader method
     });
+  }
+
+  Future<List<TransactionModel>> _loadAccountAndTransactions() async {
+    // 1. Fetch the account details using the customerId from the user object
+    final account = await _apiService.getAccountDetails(widget.user.customerId);
+    // 2. Then fetch transactions for that account
+    return _apiService.getTransactions(account.accountId,
+        filters: _currentFilters);
   }
 
   // --- FILTERING LOGIC ---
@@ -141,7 +149,13 @@ class _StatementScreenState extends State<StatementScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}"));
+                  return Center(
+                      child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                        "Error loading transactions.\n${snapshot.error}",
+                        textAlign: TextAlign.center),
+                  ));
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   // --- NEW EXPRESSIVE EMPTY STATE ---

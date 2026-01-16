@@ -77,12 +77,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? WelcomeBackScreen(
                     customerName: _lastUser!['customerName']!,
                     username: _lastUser!['username']!,
+                    storedMpin: _lastUser!['mpin']!, // Pass stored MPIN
                     onChangeUser: _onChangeUser,
                   )
                 : FullLoginScreen(
-                    onLoginSuccess: (user) {
+                    onLoginSuccess: (user, mpin) {
+                      // Accept MPIN
                       _storageService.saveLastUser(
-                          user.username, user.customerName);
+                          user.username, user.customerName, mpin); // Save MPIN
                       Navigator.pushReplacementNamed(context, '/home',
                           arguments: user);
                     },
@@ -96,12 +98,14 @@ class _LoginScreenState extends State<LoginScreen> {
 class WelcomeBackScreen extends StatefulWidget {
   final String customerName;
   final String username;
+  final String storedMpin; // New field
   final VoidCallback onChangeUser;
 
   const WelcomeBackScreen({
     super.key,
     required this.customerName,
     required this.username,
+    required this.storedMpin, // Required
     required this.onChangeUser,
   });
 
@@ -137,11 +141,20 @@ class _WelcomeBackScreenState extends State<WelcomeBackScreen> {
   }
 
   Future<void> _login({bool isBiometric = false}) async {
-    if (!isBiometric && _mpinController.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid 6-digit MPIN')),
-      );
-      return;
+    // Client-side MPIN Verification
+    if (!isBiometric) {
+      if (_mpinController.text.length < 6) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid 6-digit MPIN')),
+        );
+        return;
+      }
+      if (_mpinController.text != widget.storedMpin) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Incorrect MPIN. Please try again.')),
+        );
+        return;
+      }
     }
 
     setState(() => _isLoading = true);
@@ -160,8 +173,7 @@ class _WelcomeBackScreenState extends State<WelcomeBackScreen> {
           findUserBody['status'] == 'success' &&
           (findUserBody['data'] as List).isNotEmpty) {
         final user = UserModel.fromJson(findUserBody['data'][0]);
-        // Here you would typically validate the MPIN against a server endpoint
-        // For now, we assume it's correct and navigate home.
+        // Validated MPIN locally, so we proceed.
         Navigator.pushReplacementNamed(context, '/home', arguments: user);
       } else {
         ScaffoldMessenger.of(context)
@@ -254,7 +266,7 @@ class _WelcomeBackScreenState extends State<WelcomeBackScreen> {
 
 // --- FULL LOGIN SCREEN (for first time or changed user) ---
 class FullLoginScreen extends StatefulWidget {
-  final Function(UserModel) onLoginSuccess;
+  final Function(UserModel, String) onLoginSuccess; // Updated signature
   const FullLoginScreen({super.key, required this.onLoginSuccess});
 
   @override
@@ -285,7 +297,7 @@ class _FullLoginScreenState extends State<FullLoginScreen> {
           findUserBody['status'] == 'success' &&
           (findUserBody['data'] as List).isNotEmpty) {
         final user = UserModel.fromJson(findUserBody['data'][0]);
-        widget.onLoginSuccess(user);
+        widget.onLoginSuccess(user, _mpinController.text); // Pass MPIN
       } else {
         ScaffoldMessenger.of(context)
             .showSnackBar(const SnackBar(content: Text('User not found.')));

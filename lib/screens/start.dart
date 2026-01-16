@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pranayfunds/models/user_model.dart';
 import 'package:pranayfunds/screens/home.dart';
+import 'package:pranayfunds/screens/rewards_screen.dart';
 import 'package:pranayfunds/screens/settings.dart';
+import 'package:pranayfunds/screens/statement_screen.dart';
 
 class StartScreen extends StatefulWidget {
   final UserModel user;
@@ -18,10 +20,11 @@ class _StartScreenState extends State<StartScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize the pages list and pass the user data to both screens
     _pages = [
       HomeScreen(user: widget.user),
-      Settings(user: widget.user), // <-- Pass user data here
+      RewardsScreen(user: widget.user),
+      StatementScreen(user: widget.user),
+      Settings(user: widget.user),
     ];
   }
 
@@ -38,19 +41,29 @@ class _StartScreenState extends State<StartScreen> {
         index: _pageIndex,
         children: _pages,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _pageIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _pageIndex,
+        onDestinationSelected: _onItemTapped,
+        destinations: const [
+          NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home_filled),
-            label: "Home",
+            selectedIcon: Icon(Icons.home_filled),
+            label: 'Home',
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
+            icon: Icon(Icons.stars_outlined),
+            selectedIcon: Icon(Icons.stars),
+            label: 'Rewards',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.receipt_long_outlined),
+            selectedIcon: Icon(Icons.receipt_long),
+            label: 'History',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: "Settings",
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
