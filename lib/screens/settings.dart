@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pranayfunds/models/user_model.dart';
 import 'package:pranayfunds/services/updater_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Corrected class name from SettingsScreen to Settings
 class Settings extends StatelessWidget {
@@ -106,6 +107,24 @@ class Settings extends StatelessWidget {
 
           const Divider(height: 32),
 
+          _buildSectionHeader('Legal', textTheme),
+          _buildSettingsTile(
+            context: context,
+            icon: Icons.privacy_tip_outlined,
+            title: 'Privacy Policy',
+            onTap: () => _launchWebUrl(
+                context, 'https://funds.cottonseeds.org/privacy-policy'),
+          ),
+          _buildSettingsTile(
+            context: context,
+            icon: Icons.description_outlined,
+            title: 'Terms of Service',
+            onTap: () => _launchWebUrl(
+                context, 'https://funds.cottonseeds.org/terms-of-service'),
+          ),
+
+          const Divider(height: 32),
+
           // Logout Button
           ListTile(
             leading: Icon(Icons.logout, color: colorScheme.error),
@@ -206,6 +225,25 @@ class Settings extends StatelessWidget {
         Navigator.pop(context); // Dismiss loading if error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error checking updates: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _launchWebUrl(BuildContext context, String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not open link: $url')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open link')),
         );
       }
     }
