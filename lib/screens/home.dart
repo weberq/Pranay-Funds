@@ -264,64 +264,115 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTransactionsList(List<TransactionModel> transactions) {
     if (transactions.isEmpty) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
+      return Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color:
+                Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+          ),
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(24.0),
           child: Center(child: Text('No recent transactions.')),
         ),
       );
     }
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-            color:
-                Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount:
-            transactions.length > 5 ? 5 : transactions.length, // Show max 5
-        separatorBuilder: (context, index) =>
-            const Divider(height: 1, indent: 16, endIndent: 16),
-        itemBuilder: (context, index) {
-          final transaction = transactions[index];
-          final isCredit = transaction.transactionType == 'credit';
-          final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
 
-          return ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: CircleAvatar(
-              backgroundColor:
-                  (isCredit ? Colors.green : Colors.red).withOpacity(0.1),
-              child: Icon(
-                isCredit
-                    ? Icons.arrow_downward_rounded
-                    : Icons.arrow_upward_rounded,
-                color: isCredit ? Colors.green.shade700 : Colors.red.shade700,
-              ),
+    // Show only the latest 5 transactions
+    final displayTransactions = transactions.take(5).toList();
+
+    return Column(
+      children: displayTransactions.map((transaction) {
+        final isCredit = transaction.transactionType.toLowerCase() == 'credit';
+        final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+
+        // Formatting Date and Time
+        final dateStr =
+            DateFormat.yMMMd().format(transaction.transactionDateTime);
+        final timeStr = DateFormat.jm().format(transaction.transactionDateTime);
+
+        return Card(
+          elevation: 0,
+          margin: const EdgeInsets.only(bottom: 8),
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color:
+                  Theme.of(context).colorScheme.outlineVariant.withOpacity(0.3),
             ),
-            title: Text(
-              isCredit ? 'Credit' : 'Debit',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isCredit
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isCredit ? Icons.arrow_downward : Icons.arrow_upward,
+                    color: isCredit ? Colors.green[700] : Colors.red[700],
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+
+                // Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        transaction.narration ??
+                            transaction.reference ??
+                            'Transaction',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "$dateStr • $timeStr",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Amount
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "${isCredit ? '+' : '-'} ${formatter.format(transaction.amount)}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isCredit ? Colors.green[800] : Colors.red[800],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            subtitle: Text(
-                DateFormat.yMMMd().format(transaction.transactionDateTime)),
-            trailing: Text(
-              formatter.format(transaction.amount),
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: isCredit ? Colors.green.shade700 : Colors.red.shade700,
-              ),
-            ),
-          );
-        },
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
