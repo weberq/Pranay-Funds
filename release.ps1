@@ -20,7 +20,52 @@ if (-not $versionLine) {
 }
 
 $version = $versionLine -replace "$pubspecToken", "" -replace " ", ""
-Write-Host "Detected Version: $version" -ForegroundColor Cyan
+Write-Host "Current Version: $version" -ForegroundColor Cyan
+
+# Parse Version (x.y.z+n)
+if ($version -match "^(\d+)\.(\d+)\.(\d+)\+(\d+)$") {
+    $major = [int]$matches[1]
+    $minor = [int]$matches[2]
+    $patch = [int]$matches[3]
+    $build = [int]$matches[4]
+} else {
+    Write-Error "Version format $version not supported. Expected x.y.z+n"
+    exit 1
+}
+
+# Prompt for Update Type
+Write-Host "Select update type:" -ForegroundColor Yellow
+Write-Host "1) Patch ($major.$minor.$($patch+1))"
+Write-Host "2) Minor ($major.$($minor+1).0)"
+Write-Host "3) Major ($($major+1).0.0)"
+Write-Host "4) No Change (Keep $version)"
+
+$choice = Read-Host "Choice (1-4)"
+
+switch ($choice) {
+    '1' { $patch++; $build++; $newVersion = "$major.$minor.$patch+$build" }
+    '2' { $minor++; $patch=0; $build++; $newVersion = "$major.$minor.$patch+$build" }
+    '3' { $major++; $minor=0; $patch=0; $build++; $newVersion = "$major.$minor.$patch+$build" }
+    '4' { $newVersion = $version }
+    Default { Write-Warning "Invalid choice. keeping current version."; $newVersion = $version }
+}
+
+if ($newVersion -ne $version) {
+    Write-Host "Bumping version to: $newVersion" -ForegroundColor Green
+    
+    # Update pubspec.yaml
+    (Get-Content $pubspecFile) | ForEach-Object {
+        if ($_.TrimStart().StartsWith($pubspecToken)) {
+            "$pubspecToken$newVersion"
+        } else {
+            $_
+        }
+    } | Set-Content $pubspecFile
+    
+    $version = $newVersion
+} else {
+    Write-Host "Keeping version: $version"
+}
 
 # 2. Get Changelog
 $changelogVars = Get-Content $changelogFile -Raw | ConvertFrom-Json
@@ -51,7 +96,10 @@ $apiKey = ""
 
 if (Test-Path $launchJson) {
     try {
-        $json = Get-Content $launchJson -Raw | ConvertFrom-Json
+        # Read file, remove comments (lines starting with //), then parse
+        $jsonContent = Get-Content $launchJson | Where-Object { -not $_.Trim().StartsWith("//") } | Out-String
+        $json = $jsonContent | ConvertFrom-Json
+        
         # Navigate to configurations -> toolArgs
         $config = $json.configurations | Where-Object { $_.name -eq "pranayfunds" }
         if ($config) {
@@ -61,7 +109,7 @@ if (Test-Path $launchJson) {
             }
         }
     } catch {
-        Write-Warning "Failed to parse launch.json for API KEY."
+        Write-Warning "Failed to parse launch.json for API KEY: $_"
     }
 }
 
@@ -79,9 +127,28 @@ if ($LASTEXITCODE -ne 0) {
 
 # 5. Tag and Push
 $tagName = "v$version"
-git tag -a $tagName -m "$changelog"
+
+# Check if tag exists
+if (git rev-parse -q --verify "refs/tags/$tagName") {
+    Write-Warning "Tag $tagName already exists."
+    $overwrite = Read-Host "Overwrite tag? (y/n)"
+    if ($overwrite -eq 'y') {
+        git tag -d $tagName
+        # Attempt to delete remote tag too, just in case
+        git push origin --delete $tagName 2>$null
+        Write-Host "Old tag deleted."
+    } else {
+        Write-Host "Using existing tag..."
+    }
+}
+
+# Create tag only if it doesn't exist (or was just deleted)
+if (-not (git rev-parse -q --verify "refs/tags/$tagName")) {
+    git tag -a $tagName -m "$changelog"
+}
+
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "Tag $tagName created." -ForegroundColor Green
+    Write-Host "Tag $tagName ready." -ForegroundColor Green
     
     $push = Read-Host "Push tags and create GitHub Release? (y/n)"
     if ($push -eq 'y') {

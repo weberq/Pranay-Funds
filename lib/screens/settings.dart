@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pranayfunds/models/user_model.dart';
 import 'package:pranayfunds/services/updater_service.dart';
 
@@ -118,6 +119,30 @@ class Settings extends StatelessWidget {
                   context, '/login', (route) => false);
             },
           ),
+
+          const SizedBox(height: 32),
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Version info unavailable',
+                    style:
+                        textTheme.bodySmall?.copyWith(color: colorScheme.error),
+                  ),
+                );
+              }
+              if (!snapshot.hasData) return const SizedBox();
+              return Center(
+                child: Text(
+                  'v${snapshot.data!.version} (Build ${snapshot.data!.buildNumber})',
+                  style: textTheme.bodySmall?.copyWith(color: Colors.grey),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );
