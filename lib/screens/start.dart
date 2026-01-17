@@ -4,6 +4,7 @@ import 'package:pranayfunds/screens/home.dart';
 import 'package:pranayfunds/screens/rewards_screen.dart';
 import 'package:pranayfunds/screens/settings.dart';
 import 'package:pranayfunds/screens/statement_screen.dart';
+import 'package:pranayfunds/services/updater_service.dart';
 
 class StartScreen extends StatefulWidget {
   final UserModel user;
@@ -26,6 +27,50 @@ class _StartScreenState extends State<StartScreen> {
       StatementScreen(user: widget.user),
       Settings(user: widget.user),
     ];
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdates());
+  }
+
+  Future<void> _checkForUpdates() async {
+    try {
+      final updater = UpdaterService();
+      final release = await updater.checkForUpdates();
+      if (!mounted || release == null) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Update Available: v${release.version}'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('A new version is available!'),
+                const SizedBox(height: 8),
+                const Text('Changelog:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Text(release.changelog),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Later'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context); // Close dialog
+                updater.launchUpdateUrl(release.url);
+              },
+              child: const Text('Update Now'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      debugPrint('Startup update check failed: $e');
+    }
   }
 
   void _onItemTapped(int index) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pranayfunds/models/user_model.dart';
+import 'package:pranayfunds/services/updater_service.dart';
 
 // Corrected class name from SettingsScreen to Settings
 class Settings extends StatelessWidget {
@@ -82,6 +83,13 @@ class Settings extends StatelessWidget {
             onTap: () {},
           ),
 
+          _buildSettingsTile(
+            context: context,
+            icon: Icons.system_update_outlined,
+            title: 'Check for Updates',
+            onTap: () => _checkForUpdates(context),
+          ),
+
           const Divider(height: 32),
 
           _buildSectionHeader('Security', textTheme),
@@ -113,6 +121,69 @@ class Settings extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _checkForUpdates(BuildContext context) async {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final updater = UpdaterService();
+      final release = await updater.checkForUpdates();
+
+      if (!context.mounted) return;
+      Navigator.pop(context); // Dismiss loading
+
+      if (release != null) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Update Available: v${release.version}'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('A new version is available!'),
+                  const SizedBox(height: 8),
+                  const Text('Changelog:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(release.changelog),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Later'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  updater.launchUpdateUrl(release.url);
+                },
+                child: const Text('Update Now'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('App is up to date!')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Dismiss loading if error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error checking updates: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildSectionHeader(String title, TextTheme textTheme) {
