@@ -188,8 +188,8 @@ class Settings extends StatelessWidget {
               ),
               FilledButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  updater.launchUpdateUrl(release.url);
+                  Navigator.pop(context); // Close info dialog
+                  _startUpdate(context, updater, release);
                 },
                 child: const Text('Update Now'),
               ),
@@ -206,6 +206,114 @@ class Settings extends StatelessWidget {
         Navigator.pop(context); // Dismiss loading if error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error checking updates: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _startUpdate(
+      BuildContext context, UpdaterService updater, ReleaseInfo release) async {
+    if (release.downloadUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No APK asset found in release.')),
+      );
+      return;
+    }
+
+    // Show Progress Dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            double progress = 0.0;
+            return PopScope(
+              canPop: false,
+              child: AlertDialog(
+                title: const Text('Downloading Update...'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(value: progress),
+                    const SizedBox(height: 10),
+                    Text('${(progress * 100).toStringAsFixed(0)}%'),
+                    const SizedBox(height: 10),
+                    const Text('Please wait while the update downloads.'),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    // Provide a way to update the dialog state
+    // Since StatefulBuilder rebuilds its child, we need to find a way to update 'progress'
+    // actually, the simplest way without complex state management in a static method context
+    // is to use a ValueNotifier or just rebuilding the widget.
+    // However, clean approach:
+
+    // Changing approach: define progress notifier outside
+    final progressNotifier = ValueNotifier<double>(0.0);
+
+    // Close the static dialog
+    if (context.mounted) Navigator.pop(context);
+
+    // Show dynamic dialog
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: const Text('Downloading Update...'),
+            content: ValueListenableBuilder<double>(
+              valueListenable: progressNotifier,
+              builder: (context, value, child) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(value: value),
+                    const SizedBox(height: 10),
+                    Text('${(value * 100).toStringAsFixed(0)}%'),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      await updater.downloadAndInstallUpdate(
+        release.downloadUrl!,
+        (progress) {
+          progressNotifier.value = progress;
+        },
+      );
+      // If install triggers, app might close or pause.
+      // We can pop the dialog if we are still here.
+      if (context.mounted) Navigator.pop(context);
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close progress dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Update Failed'),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
         );
       }
     }

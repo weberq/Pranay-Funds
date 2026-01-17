@@ -60,8 +60,8 @@ class _StartScreenState extends State<StartScreen> {
             ),
             FilledButton(
               onPressed: () {
-                Navigator.pop(context); // Close dialog
-                updater.launchUpdateUrl(release.url);
+                Navigator.pop(context); // Close info dialog
+                _startUpdate(context, updater, release);
               },
               child: const Text('Update Now'),
             ),
@@ -70,6 +70,74 @@ class _StartScreenState extends State<StartScreen> {
       );
     } catch (e) {
       debugPrint('Startup update check failed: $e');
+    }
+  }
+
+  Future<void> _startUpdate(
+      BuildContext context, UpdaterService updater, ReleaseInfo release) async {
+    if (release.downloadUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No APK asset found in release.')),
+      );
+      return;
+    }
+
+    // Show Progress Dialog
+    final progressNotifier = ValueNotifier<double>(0.0);
+
+    // Show dynamic dialog
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: const Text('Downloading Update...'),
+            content: ValueListenableBuilder<double>(
+              valueListenable: progressNotifier,
+              builder: (context, value, child) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(value: value),
+                    const SizedBox(height: 10),
+                    Text('${(value * 100).toStringAsFixed(0)}%'),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      await updater.downloadAndInstallUpdate(
+        release.downloadUrl!,
+        (progress) {
+          progressNotifier.value = progress;
+        },
+      );
+      if (context.mounted) Navigator.pop(context);
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Close progress dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Update Failed'),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 

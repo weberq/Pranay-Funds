@@ -1,17 +1,24 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ReleaseInfo {
   final String version;
   final String url;
   final String changelog;
+  final String? downloadUrl;
 
   ReleaseInfo({
     required this.version,
     required this.url,
     required this.changelog,
+    this.downloadUrl,
   });
 }
 
@@ -39,15 +46,36 @@ class UpdaterService {
         final String htmlUrl = data['html_url'] ?? '';
         final String body = data['body'] ?? '';
 
-        // Strip 'v' prefix if present (e.g., v1.0.1 -> 1.0.1)
-        final latestVersion =
+        // Find APK asset
+        String? apkUrl;
+        if (data['assets'] != null) {
+          for (var asset in data['assets']) {
+            if (asset['name'].toString().endsWith('.apk')) {
+              apkUrl = asset['browser_download_url'];
+              break;
+            }
+          }
+        }
+
+        // Strip 'v' prefix if present
+        String latestVersion =
             tagName.startsWith('v') ? tagName.substring(1) : tagName;
 
-        if (_isNewer(latestVersion, currentVersion)) {
+        // Strip build number (e.g. 1.0.0+1 -> 1.0.0)
+        if (latestVersion.contains('+')) {
+          latestVersion = latestVersion.split('+')[0];
+        }
+
+        final currentVersionStripped = currentVersion.contains('+')
+            ? currentVersion.split('+')[0]
+            : currentVersion;
+
+        if (_isNewer(latestVersion, currentVersionStripped)) {
           return ReleaseInfo(
             version: latestVersion,
             url: htmlUrl,
             changelog: body,
+            downloadUrl: apkUrl,
           );
         }
       }
@@ -57,7 +85,41 @@ class UpdaterService {
     return null;
   }
 
-  /// Launch the update URL in the browser
+  /// Downloads the update and triggers installation
+  Future<void> downloadAndInstallUpdate(
+      String url, Function(double) onProgress) async {
+    // Request storage/install permissions
+    if (await Permission.requestInstallPackages.request().isDenied) {
+      throw 'Install permission denied';
+    }
+
+    // Get temp directory
+    final dir = await getExternalStorageDirectory();
+
+    if (dir == null) throw 'Could not get storage directory';
+
+    final savePath = '${dir.path}/update.apk';
+
+    // Download
+    final dio = Dio();
+    await dio.download(
+      url,
+      savePath,
+      onReceiveProgress: (received, total) {
+        if (total != -1) {
+          onProgress(received / total);
+        }
+      },
+    );
+
+    // Install
+    final result = await OpenFilex.open(savePath);
+    if (result.type != ResultType.done) {
+      throw 'Install failed: ${result.message}';
+    }
+  }
+
+  /// Launch the update URL in the browser (Fallback)
   Future<void> launchUpdateUrl(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
