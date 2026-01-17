@@ -297,9 +297,98 @@ class _RewardsScreenState extends State<RewardsScreen> {
                           ),
                         ],
                       ),
+
+                      const SizedBox(height: 32),
+
+                      // --- New Placeholder Cards ---
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildComingSoonCard(
+                              context,
+                              'Refer and Earn',
+                              Icons.person_add_alt_1_rounded,
+                              Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _buildComingSoonCard(
+                              context,
+                              'Rewards & Vouchers',
+                              Icons.redeem_rounded,
+                              Theme.of(context).colorScheme.tertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32), // Bottom padding
                     ],
                   ),
                 ),
+    );
+  }
+
+  Widget _buildComingSoonCard(
+      BuildContext context, String title, IconData icon, Color color) {
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.3),
+        ),
+      ),
+      child: Container(
+        height: 180,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 36, color: color),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .outlineVariant
+                        .withOpacity(0.5),
+                  )),
+              child: Text(
+                'COMING SOON',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
