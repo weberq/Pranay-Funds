@@ -2,9 +2,12 @@ class TransactionModel {
   final int transactionId;
   final String transactionType;
   final DateTime transactionDateTime;
-  final double amount; // <-- FIX: Changed from int to double
+  final double amount;
   final String? balanceAfter;
   final String status;
+  final String? reference;
+  final String? narration;
+  final String? channel;
 
   TransactionModel({
     required this.transactionId,
@@ -13,6 +16,9 @@ class TransactionModel {
     required this.amount,
     required this.status,
     this.balanceAfter,
+    this.reference,
+    this.narration,
+    this.channel,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +29,9 @@ class TransactionModel {
       amount: (json['amount'] as num).toDouble(),
       balanceAfter: json['balance_after'],
       status: json['status'],
+      reference: json['reference'],
+      narration: json['narration'],
+      channel: json['channel'],
     );
   }
 }

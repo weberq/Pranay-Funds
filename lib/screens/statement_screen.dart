@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import 'package:pranayfunds/models/transaction_model.dart';
-import 'package:pranayfunds/models/user_model.dart'; // Import
+import 'package:pranayfunds/models/user_model.dart';
 import 'package:pranayfunds/services/api_service.dart';
 
 class StatementScreen extends StatefulWidget {
-  final UserModel user; // Changed to accept UserModel
+  final UserModel user;
   const StatementScreen({super.key, required this.user});
 
   @override
@@ -15,58 +15,97 @@ class StatementScreen extends StatefulWidget {
 
 class _StatementScreenState extends State<StatementScreen> {
   final ApiService _apiService = ApiService();
-  late Future<List<TransactionModel>> _transactionsFuture;
+  final ScrollController _scrollController = ScrollController();
+
+  // Data State
+  List<TransactionModel> _transactions = [];
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  int _currentPage = 1;
+  String? _error;
+
+  // Filters
   Map<String, String> _currentFilters = {};
-  String _filterLabel = "All Transactions"; // Default to showing all
+  String _filterLabel = "All Transactions";
 
   @override
   void initState() {
     super.initState();
-    _fetchTransactions(); // Fetch all transactions initially
+    _fetchTransactions(reset: true);
+    _scrollController.addListener(_onScroll);
   }
 
-  void _fetchTransactions() {
-    setState(() {
-      _transactionsFuture = _loadAccountAndTransactions(); // New loader method
-    });
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
-  Future<List<TransactionModel>> _loadAccountAndTransactions() async {
-    // 1. Fetch the account details using the customerId from the user object
-    final account = await _apiService.getAccountDetails(widget.user.customerId);
-    // 2. Then fetch transactions for that account
-    return _apiService.getTransactions(account.accountId,
-        filters: _currentFilters);
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoadingMore && _hasMore) {
+        _fetchTransactions(reset: false);
+      }
+    }
+  }
+
+  Future<void> _fetchTransactions({required bool reset}) async {
+    if (reset) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+        _currentPage = 1;
+        _hasMore = true;
+        _transactions = [];
+      });
+    } else {
+      setState(() {
+        _isLoadingMore = true;
+      });
+    }
+
+    try {
+      // 1. Get account details first
+      final account =
+          await _apiService.getAccountDetails(widget.user.customerId);
+
+      // 2. Fetch page
+      final newTransactions = await _apiService.getTransactions(
+        account.accountId,
+        filters: _currentFilters,
+        page: _currentPage,
+      );
+
+      setState(() {
+        if (reset) {
+          _transactions = newTransactions;
+        } else {
+          _transactions.addAll(newTransactions);
+        }
+
+        _hasMore = newTransactions.length >= 10; // Assuming page size is 10
+        if (_hasMore) {
+          _currentPage++;
+        }
+        _isLoading = false;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+        _isLoadingMore = false;
+      });
+    }
   }
 
   // --- FILTERING LOGIC ---
-  void _applyFilterAll() {
-    _currentFilters = {}; // Empty filter fetches all
-    _filterLabel = "All Transactions";
-    _fetchTransactions();
-  }
-
-  void _applyFilterThisMonth() {
-    final now = DateTime.now();
-    _currentFilters = {'month': DateFormat('yyyy-MM').format(now)};
-    _filterLabel = "This Month";
-    _fetchTransactions();
-  }
-
-  void _applyFilterByYear(int year) {
-    _currentFilters = {'year': year.toString()};
-    _filterLabel = "Year: $year";
-    _fetchTransactions();
-  }
-
-  void _applyFilterByDateRange(DateTimeRange range) {
-    _currentFilters = {
-      'from': DateFormat('yyyy-MM-dd').format(range.start),
-      'to': DateFormat('yyyy-MM-dd').format(range.end),
-    };
-    _filterLabel =
-        "${DateFormat.yMMMd().format(range.start)} - ${DateFormat.yMMMd().format(range.end)}";
-    _fetchTransactions();
+  void _applyFilter(Map<String, String> filter, String label) {
+    _currentFilters = filter;
+    _filterLabel = label;
+    _fetchTransactions(reset: true);
   }
 
   void _showFilterModal() {
@@ -86,7 +125,7 @@ class _StatementScreenState extends State<StatementScreen> {
               title: const Text("All Transactions"),
               onTap: () {
                 Navigator.pop(context);
-                _applyFilterAll();
+                _applyFilter({}, "All Transactions");
               },
             ),
             ListTile(
@@ -94,15 +133,24 @@ class _StatementScreenState extends State<StatementScreen> {
               title: const Text("This Month"),
               onTap: () {
                 Navigator.pop(context);
-                _applyFilterThisMonth();
+                final now = DateTime.now();
+                _applyFilter(
+                  {'month': DateFormat('yyyy-MM').format(now)},
+                  "This Month",
+                );
               },
             ),
             ListTile(
-              leading: const Icon(Icons.event),
-              title: const Text("This Year"),
+              leading: const Icon(Icons.history),
+              title: const Text("Last Month"),
               onTap: () {
                 Navigator.pop(context);
-                _applyFilterByYear(DateTime.now().year);
+                final now = DateTime.now();
+                final lastMonth = DateTime(now.year, now.month - 1);
+                _applyFilter(
+                  {'month': DateFormat('yyyy-MM').format(lastMonth)},
+                  "Last Month",
+                );
               },
             ),
             ListTile(
@@ -116,7 +164,13 @@ class _StatementScreenState extends State<StatementScreen> {
                   lastDate: DateTime.now(),
                 );
                 if (range != null) {
-                  _applyFilterByDateRange(range);
+                  _applyFilter(
+                    {
+                      'from': DateFormat('yyyy-MM-dd').format(range.start),
+                      'to': DateFormat('yyyy-MM-dd').format(range.end),
+                    },
+                    "${DateFormat.yMMMd().format(range.start)} - ${DateFormat.yMMMd().format(range.end)}",
+                  );
                 }
               },
             ),
@@ -132,62 +186,74 @@ class _StatementScreenState extends State<StatementScreen> {
       appBar: AppBar(title: const Text("Statement")),
       body: Column(
         children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: ActionChip(
-              avatar: const Icon(Icons.filter_list),
-              label: Text(_filterLabel),
-              onPressed: _showFilterModal,
+          // Filter Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Theme.of(context).colorScheme.surface,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    "Showing: $_filterLabel",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _showFilterModal,
+                  icon: const Icon(Icons.filter_list, size: 18),
+                  label: const Text("Filter"),
+                )
+              ],
             ),
           ),
-          Expanded(
-            child: FutureBuilder<List<TransactionModel>>(
-              future: _transactionsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(
-                      child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                        "Error loading transactions.\n${snapshot.error}",
-                        textAlign: TextAlign.center),
-                  ));
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  // --- NEW EXPRESSIVE EMPTY STATE ---
-                  return _buildEmptyState();
-                }
+          const Divider(height: 1),
 
-                final transactions = snapshot.data!;
-                return ListView.separated(
-                  padding: const EdgeInsets.all(8.0),
-                  itemCount: transactions.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final transaction = transactions[index];
-                    return _buildTransactionCard(transaction);
-                  },
-                );
-              },
-            ),
+          // List
+          Expanded(
+            child: _isLoading && _transactions.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null && _transactions.isEmpty
+                    ? Center(child: Text("Error: $_error"))
+                    : _transactions.isEmpty
+                        ? _buildEmptyState()
+                        : RefreshIndicator(
+                            onRefresh: () async =>
+                                _fetchTransactions(reset: true),
+                            child: ListView.separated(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.all(8),
+                              itemCount: _transactions.length +
+                                  (_isLoadingMore ? 1 : 0),
+                              separatorBuilder: (c, i) =>
+                                  const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                if (index == _transactions.length) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child:
+                                          CircularProgressIndicator.adaptive(),
+                                    ),
+                                  );
+                                }
+                                return _buildTransactionCard(
+                                    _transactions[index]);
+                              },
+                            ),
+                          ),
           ),
         ],
       ),
     );
   }
 
-  /// A beautiful widget to show when no transactions are found.
   Widget _buildEmptyState() {
     final illustration = '''
     <svg width="150" height="150" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="#B0BEC5"/>
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="none"/>
-    <path d="M11 7h2v6h-2zm0 8h2v2h-2z" fill="#78909C"/>
     </svg>
     ''';
     return Center(
@@ -195,58 +261,124 @@ class _StatementScreenState extends State<StatementScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SvgPicture.string(illustration),
-          const SizedBox(height: 16),
-          Text(
-            "No Transactions Found",
-            style: Theme.of(context).textTheme.headlineSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Try selecting a different filter\nor date range.",
-            style: Theme.of(context).textTheme.bodyLarge,
-            textAlign: TextAlign.center,
-          ),
+          Text("No Transactions",
+              style: Theme.of(context).textTheme.headlineSmall),
         ],
       ),
     );
   }
 
-  /// An updated transaction tile wrapped in a styled Card.
   Widget _buildTransactionCard(TransactionModel transaction) {
-    final isCredit = transaction.transactionType == 'credit';
+    final isCredit = transaction.transactionType.toLowerCase() == 'credit';
     final formatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹');
+
+    // Formatting Date and Time
+    final dateStr = DateFormat.yMMMd().format(transaction.transactionDateTime);
+    final timeStr = DateFormat.jm().format(transaction.transactionDateTime);
+
     return Card(
       elevation: 0,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-            color:
-                Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5)),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          backgroundColor:
-              (isCredit ? Colors.green : Colors.red).withOpacity(0.1),
-          child: Icon(
-            isCredit
-                ? Icons.arrow_downward_rounded
-                : Icons.arrow_upward_rounded,
-            color: isCredit ? Colors.green.shade700 : Colors.red.shade700,
-          ),
+          color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.3),
         ),
-        title: Text(isCredit ? 'Credit' : 'Debit',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle:
-            Text(DateFormat.yMMMd().format(transaction.transactionDateTime)),
-        trailing: Text(
-          formatter.format(transaction.amount),
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: isCredit ? Colors.green.shade700 : Colors.red.shade700,
-          ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isCredit
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isCredit ? Icons.arrow_downward : Icons.arrow_upward,
+                    color: isCredit ? Colors.green[700] : Colors.red[700],
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 16),
+
+                // Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        transaction.narration ??
+                            transaction.reference ??
+                            'Transaction',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "$dateStr • $timeStr",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (transaction.reference != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            "Ref: ${transaction.reference}",
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Theme.of(context).colorScheme.outline,
+                              fontFamily: 'Unifont', // Monospace feel for IDs
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Amount
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      "${isCredit ? '+' : '-'} ${formatter.format(transaction.amount)}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isCredit ? Colors.green[800] : Colors.red[800],
+                      ),
+                    ),
+                    if (transaction.balanceAfter != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                          "Bal: ${transaction.balanceAfter}", // Might need currency formatting too if string is raw
+                          style: TextStyle(
+                            fontSize: 11,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

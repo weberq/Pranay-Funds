@@ -38,17 +38,21 @@ class ApiService {
   }
 
   Future<List<TransactionModel>> getTransactions(int accountId,
-      {Map<String, String>? filters}) async {
-    final queryParameters = {'account_id': accountId.toString()};
+      {Map<String, String>? filters, int page = 1}) async {
+    final queryParameters = {
+      'account_id': accountId.toString(),
+      'page': page.toString(),
+    };
     if (filters != null) queryParameters.addAll(filters);
     final url = Uri.parse('$_baseUrl/transactions/list')
         .replace(queryParameters: queryParameters);
     final response = await http.get(url, headers: {'X-API-KEY': _apiKey});
-    _logApiCall('/transactions/list', response);
+    _logApiCall('/transactions/list (Page $page)', response);
+
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);
-      if (body['status'] == 'error' &&
-          body['message'] == 'No transactions found') {
+      if (body['status'] == 'error') {
+        // Return empty if explicit 'No transactions found' or generic error logic
         return [];
       }
       if (body['status'] == 'success' && body['data'] != null) {
