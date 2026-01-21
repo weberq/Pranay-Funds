@@ -1,7 +1,12 @@
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:pranayfunds/models/user_model.dart';
+import 'package:pranayfunds/screens/connectivity_test_screen.dart';
+import 'package:pranayfunds/screens/intro_screen.dart';
+import 'package:pranayfunds/screens/mobile_otp_screen.dart';
+import 'package:pranayfunds/screens/pending_approval_screen.dart';
 import 'package:pranayfunds/screens/login.dart';
+import 'package:pranayfunds/screens/registration_screen.dart';
 import 'package:pranayfunds/screens/splash.dart';
 import 'package:pranayfunds/screens/start.dart';
 
@@ -49,6 +54,11 @@ class MyApp extends StatelessWidget {
           routes: {
             '/': (context) => const Splash(),
             '/login': (context) => const LoginScreen(),
+            '/intro': (context) => const IntroScreen(),
+            '/mobile_otp': (context) => const MobileOtpScreen(),
+            '/register': (context) => const RegistrationScreen(),
+            '/pending_approval': (context) => const PendingApprovalScreen(),
+            '/test_conn': (context) => const ConnectivityTestScreen(),
             '/home': (context) {
               final user =
                   ModalRoute.of(context)!.settings.arguments as UserModel;

@@ -382,6 +382,23 @@ class _FullLoginScreenState extends State<FullLoginScreen> {
                       : const Text('Login'),
                 ),
               ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, '/mobile_otp'),
+                child: Text(
+                  'New User? Register Here',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pushNamed(context, '/test_conn'),
+                icon:
+                    const Icon(Icons.build_circle_outlined, color: Colors.grey),
+                tooltip: 'Test Connection',
+              ),
             ],
           ),
         ),
